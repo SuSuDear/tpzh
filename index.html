@@ -14,7 +14,7 @@
 
     body {
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      background-color: #f0f2f5;
+      background-color: #f5f7fa;
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -26,39 +26,49 @@
       margin-bottom: 20px;
       text-align: center;
       color: #333;
-      font-size: 2em;
+      font-size: 2.5em;
+      font-weight: bold;
     }
 
     .container {
-      background-color: #fff;
-      padding: 20px;
+      background-color: #ffffff;
+      padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
       width: 100%;
-      max-width: 900px;
+      max-width: 1000px;
     }
 
     .menu {
       display: flex;
       justify-content: space-around;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
       flex-wrap: wrap;
     }
 
     .menu button {
-      padding: 10px 20px;
-      margin: 5px;
+      padding: 12px 24px;
+      margin: 8px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       background-color: #4CAF50;
       color: white;
       cursor: pointer;
-      transition: background-color 0.3s;
-      flex: 1 1 150px;
+      transition: background-color 0.3s, transform 0.2s;
+      font-size: 1em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .menu button:hover {
       background-color: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .menu button.active {
+      background-color: #388E3C;
     }
 
     .module {
@@ -67,6 +77,7 @@
       border: 1px solid #e0e0e0;
       border-radius: 8px;
       background-color: #fafafa;
+      transition: all 0.3s;
     }
 
     .module.active {
@@ -76,13 +87,14 @@
     .input-group {
       display: flex;
       flex-direction: column;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
 
     label {
       margin-bottom: 8px;
       color: #555;
-      font-weight: bold;
+      font-weight: 600;
+      font-size: 1.1em;
     }
 
     input[type="file"],
@@ -90,7 +102,7 @@
     select,
     input[type="range"],
     button {
-      padding: 10px;
+      padding: 12px;
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 1em;
@@ -115,10 +127,16 @@
       width: fit-content;
       align-self: flex-start;
       margin-top: 10px;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background-color 0.3s, transform 0.2s;
     }
 
     button.execute-btn:hover {
       background-color: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .download-btn {
@@ -126,14 +144,17 @@
       color: white;
       cursor: pointer;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 24px;
       border-radius: 6px;
       margin-top: 10px;
-      transition: background-color 0.3s;
+      transition: background-color 0.3s, transform 0.2s;
+      font-weight: bold;
     }
 
     .download-btn:hover {
       background-color: #0b7dda;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .preview {
@@ -147,17 +168,48 @@
       max-width: 100%;
       height: auto;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       margin-bottom: 10px;
     }
 
     .preview-details {
       text-align: center;
       color: #666;
-      font-size: 0.9em;
+      font-size: 0.95em;
     }
 
-    /* 响应式设计 */
+    /* 压缩质量滑块样式 */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slider-container input[type="range"] {
+      flex: 1;
+    }
+
+    .slider-percentage {
+      width: 50px;
+      text-align: center;
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* 圆形裁剪预览框 */
+    .crop-area {
+      position: relative;
+      display: inline-block;
+    }
+
+    .crop-overlay {
+      position: absolute;
+      border: 2px dashed #4CAF50;
+      border-radius: 50%;
+      cursor: move;
+      transform: translate(-50%, -50%);
+    }
+
     @media (max-width: 600px) {
       .menu {
         flex-direction: column;
@@ -174,7 +226,7 @@
   <div class="container">
     <!-- 功能菜单 -->
     <div class="menu">
-      <button data-module="uploadModule">上传图片</button>
+      <button data-module="uploadModule" class="active">上传图片</button>
       <button data-module="resizeModule">调整大小</button>
       <button data-module="rotateModule">旋转图片</button>
       <button data-module="compressionModule">压缩质量</button>
@@ -182,8 +234,8 @@
     </div>
 
     <!-- 上传模块 -->
-    <div class="module" id="uploadModule">
-      <h2>1. 上传图片</h2>
+    <div class="module active" id="uploadModule">
+      <h2>上传图片</h2>
       <div class="input-group">
         <input type="file" id="imageUpload" accept="image/*">
       </div>
@@ -195,7 +247,7 @@
 
     <!-- 调整大小模块 -->
     <div class="module" id="resizeModule">
-      <h2>2. 调整大小</h2>
+      <h2>调整大小</h2>
       <div class="input-group">
         <label for="resizeWidth">宽度 (px)</label>
         <input type="number" id="resizeWidth" placeholder="例如: 128">
@@ -214,7 +266,7 @@
 
     <!-- 旋转模块 -->
     <div class="module" id="rotateModule">
-      <h2>3. 旋转图片</h2>
+      <h2>旋转图片</h2>
       <button class="execute-btn" id="rotateButton">旋转 90°</button>
       <div class="preview" id="rotatedPreview" style="display: none;">
         <img id="rotatedImage" src="#" alt="旋转后的图片">
@@ -225,10 +277,13 @@
 
     <!-- 压缩模块 -->
     <div class="module" id="compressionModule">
-      <h2>4. 压缩质量</h2>
+      <h2>压缩质量</h2>
       <div class="input-group">
         <label for="compressionRange">压缩质量 (%)</label>
-        <input type="range" id="compressionRange" min="10" max="100" value="80">
+        <div class="slider-container">
+          <input type="range" id="compressionRange" min="10" max="100" value="80">
+          <span class="slider-percentage" id="compressionPercentage">80%</span>
+        </div>
       </div>
       <div class="preview" id="compressedPreview" style="display: none;">
         <img id="compressedImage" src="#" alt="压缩后的图片">
@@ -239,7 +294,7 @@
 
     <!-- 裁剪模块 -->
     <div class="module" id="cropModule">
-      <h2>5. 裁剪图片</h2>
+      <h2>裁剪图片</h2>
       <div class="input-group">
         <label for="cropSelect">选择裁剪方式</label>
         <select id="cropSelect">
@@ -253,6 +308,13 @@
         <img id="croppedImage" src="#" alt="裁剪后的图片">
         <div class="preview-details">裁剪后的图片预览</div>
         <button class="download-btn" id="downloadCropped">下载裁剪后的图片</button>
+      </div>
+      <!-- 圆形裁剪区域选择 -->
+      <div id="cropAreaContainer" style="display: none; position: relative; margin-top: 20px;">
+        <img id="cropSourceImage" src="#" alt="裁剪源图片" style="max-width: 100%; border-radius: 8px;">
+        <div class="crop-area" id="cropOverlay" style="display: none;">
+          <div class="crop-overlay" id="circleOverlay"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -297,6 +359,7 @@
 
     // 压缩模块元素
     const compressionRange = document.getElementById('compressionRange');
+    const compressionPercentage = document.getElementById('compressionPercentage');
     const compressedImage = document.getElementById('compressedImage');
     const compressedPreview = document.getElementById('compressedPreview');
     const downloadCompressed = document.getElementById('downloadCompressed');
@@ -307,15 +370,33 @@
     const croppedImage = document.getElementById('croppedImage');
     const croppedPreview = document.getElementById('croppedPreview');
     const downloadCropped = document.getElementById('downloadCropped');
+    const cropAreaContainer = document.getElementById('cropAreaContainer');
+    const cropSourceImage = document.getElementById('cropSourceImage');
+    const cropOverlay = document.getElementById('bulkOverlay');
 
     // 功能菜单点击事件
     menuButtons.forEach(button => {
       button.addEventListener('click', () => {
         const targetModule = button.getAttribute('data-module');
+        // 移除所有按钮的active状态
+        menuButtons.forEach(btn => btn.classList.remove('active'));
+        // 添加当前按钮的active状态
+        button.classList.add('active');
         // 隐藏所有模块
         modules.forEach(mod => mod.classList.remove('active'));
         // 显示选中的模块
         document.getElementById(targetModule).classList.add('active');
+        // 如果切换到裁剪模块且裁剪方式为圆形，显示裁剪区域选择
+        if(targetModule === 'cropModule') {
+          const cropMode = cropSelect.value;
+          if(cropMode === 'circle') {
+            cropAreaContainer.style.display = 'block';
+          } else {
+            cropAreaContainer.style.display = 'none';
+          }
+        } else {
+          cropAreaContainer.style.display = 'none';
+        }
       });
     });
 
@@ -333,12 +414,15 @@
 
           // 初始化功能模块的输入值
           // 调整大小
-          const resizeModule = document.getElementById('resizeModule');
           resizeWidth.value = originalImage.width;
           resizeHeight.value = originalImage.height;
 
           // 压缩质量
           compressionRange.value = 80;
+          compressionPercentage.textContent = '80%';
+
+          // 显示裁剪源图片
+          cropSourceImage.src = originalImageData;
 
           // 清除所有预览
           clearAllPreviews();
@@ -437,6 +521,7 @@
       if (!originalImageData) return;
 
       const quality = compressionRange.value / 100;
+      compressionPercentage.textContent = `${compressionRange.value}%`;
 
       const tempImage = new Image();
       tempImage.src = originalImageData;
@@ -495,10 +580,9 @@
           roundedRect(ctx, 0, 0, canvas.width, canvas.height, radius);
           ctx.fill();
         } else if (cropMode === 'circle') {
-          ctx.globalCompositeOperation = 'destination-in';
-          ctx.beginPath();
-          ctx.arc(canvas.width / 2, canvas.height / 2, Math.min(canvas.width, canvas.height) / 2, 0, Math.PI * 2, true);
-          ctx.fill();
+          // 由用户手动选择裁剪区域
+          alert('请在裁剪模块中手动选择圆形裁剪区域。');
+          return;
         }
 
         // 恢复默认绘图模式
@@ -554,6 +638,112 @@
       croppedImage.src = '';
       croppedPreview.style.display = 'none';
     }
+
+    // 裁剪模块增强：圆形裁剪手动拖动选择
+    // 仅在选择圆形裁剪时启用
+    cropSelect.addEventListener('change', () => {
+      const cropMode = cropSelect.value;
+      if(cropMode === 'circle') {
+        cropAreaContainer.style.display = 'block';
+        setupCropArea();
+      } else {
+        cropAreaContainer.style.display = 'none';
+      }
+    });
+
+    function setupCropArea() {
+      cropOverlay.style.display = 'block';
+      const img = cropSourceImage;
+      const container = cropAreaContainer;
+
+      // 初始化裁剪框参数
+      const cropSize = Math.min(img.width, img.height) / 3;
+      let cropX = img.width / 2;
+      let cropY = img.height / 2;
+      let currentSize = cropSize;
+
+      // 设置初始裁剪框样式
+      const overlay = document.getElementById('circleOverlay');
+      overlay.style.width = `${currentSize}px`;
+      overlay.style.height = `${currentSize}px`;
+      overlay.style.left = `${cropX}px`;
+      overlay.style.top = `${cropY}px`;
+
+      // 使裁剪框可以拖动
+      let isDragging = false;
+      let offsetX, offsetY;
+
+      overlay.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.clientX - overlay.offsetLeft;
+        offsetY = e.clientY - overlay.offsetTop;
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+          let newX = e.clientX - container.getBoundingClientRect().left - offsetX;
+          let newY = e.clientY - container.getBoundingClientRect().top - offsetY;
+
+          // 限制裁剪框在图片范围内
+          newX = Math.max(currentSize / 2, Math.min(img.width - currentSize / 2, newX));
+          newY = Math.max(currentSize / 2, Math.min(img.height - currentSize / 2, newY));
+
+          overlay.style.left = `${newX}px`;
+          overlay.style.top = `${newY}px`;
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+      // 裁剪图片
+      cropButton.addEventListener('click', () => {
+        const cropMode = cropSelect.value;
+        if(cropMode === 'circle') {
+          // 获取裁剪框位置和大小
+          const rect = overlay.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+
+          const centerX = rect.left - containerRect.left + rect.width / 2;
+          const centerY = rect.top - containerRect.top + rect.height / 2;
+          const radius = rect.width / 2;
+
+          // 绘制圆形裁剪
+          canvas.width = radius * 2;
+          canvas.height = radius * 2;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(radius, radius, radius, 0, Math.PI * 2, true);
+          ctx.closePath();
+          ctx.clip();
+
+          // 绘制裁剪区域
+          ctx.drawImage(
+            cropSourceImage,
+            centerX - radius,
+            centerY - radius,
+            radius * 2,
+            radius * 2,
+            0,
+            0,
+            radius * 2,
+            radius * 2
+          );
+
+          ctx.restore();
+
+          // 获取裁剪后的图片URL
+          const croppedDataURL = canvas.toDataURL('image/png');
+          croppedImage.src = croppedDataURL;
+          croppedPreview.style.display = 'flex';
+        } else if(cropMode === 'rounded') {
+          // 已在按钮点击事件中处理
+        }
+      });
+    }
+
   </script>
 </body>
 </html>
