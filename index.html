@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>在线图片分辨率调整器</title>
+  <style>
+    /* Reset和基础样式 */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      text-align: center;
+      color: #333;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+    }
+
+    input[type="file"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .images {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .images img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+
+    .download-btn {
+      background-color: #2196F3;
+    }
+
+    .download-btn:hover {
+      background-color: #0b7dda;
+    }
+
+    @media (max-width: 500px) {
+      .container {
+        padding: 15px;
+      }
+
+      button {
+        font-size: 14px;
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>在线图片分辨率调整器</h1>
+  <div class="container">
+    <div class="input-group">
+      <label for="imageUpload">上传图片</label>
+      <input type="file" id="imageUpload" accept="image/*">
+    </div>
+
+    <div class="input-group">
+      <label for="widthInput">宽度 (px)</label>
+      <input type="number" id="widthInput" placeholder="例如: 128">
+    </div>
+
+    <div class="input-group">
+      <label for="heightInput">高度 (px)</label>
+      <input type="number" id="heightInput" placeholder="例如: 128">
+    </div>
+
+    <button id="resizeButton">调整大小</button>
+
+    <div class="images">
+      <div id="originalImageContainer" style="display: none;">
+        <h2>原始图片</h2>
+        <img id="originalImage" src="#" alt="Original Image">
+      </div>
+
+      <div id="resizedImageContainer" style="display: none;">
+        <h2>调整后的图片</h2>
+        <img id="resizedImage" src="#" alt="Resized Image">
+        <button id="downloadButton" class="download-btn">下载图片</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 隐藏的Canvas用于图像处理 -->
+  <canvas id="canvas" style="display: none;"></canvas>
+
+  <script>
+    const imageUpload = document.getElementById('imageUpload');
+    const widthInput = document.getElementById('widthInput');
+    const heightInput = document.getElementById('heightInput');
+    const resizeButton = document.getElementById('resizeButton');
+    const originalImageContainer = document.getElementById('originalImageContainer');
+    const originalImage = document.getElementById('originalImage');
+    const resizedImageContainer = document.getElementById('resizedImageContainer');
+    const resizedImage = document.getElementById('resizedImage');
+    const downloadButton = document.getElementById('downloadButton');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let originalImageData = null;
+
+    imageUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        originalImage.src = event.target.result;
+        originalImage.onload = function() {
+          originalImageContainer.style.display = 'block';
+          // 初始化宽度和高度输入框
+          widthInput.value = originalImage.width;
+          heightInput.value = originalImage.height;
+          originalImageData = event.target.result;
+        }
+      }
+      reader.readAsDataURL(file);
+    });
+
+    resizeButton.addEventListener('click', () => {
+      if (!originalImage.src) {
+        alert('请先上传一张图片。');
+        return;
+      }
+
+      const newWidth = parseInt(widthInput.value);
+      const newHeight = parseInt(heightInput.value);
+
+      if (isNaN(newWidth) || isNaN(newHeight) || newWidth <= 0 || newHeight <= 0) {
+        alert('请输入有效的宽度和高度。');
+        return;
+      }
+
+      // 设置Canvas尺寸
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+
+      // 把图片绘制到Canvas上
+      ctx.drawImage(originalImage, 0, 0, newWidth, newHeight);
+
+      // 获取调整后的图片URL
+      const resizedDataURL = canvas.toDataURL('image/png');
+      resizedImage.src = resizedDataURL;
+      resizedImageContainer.style.display = 'block';
+    });
+
+    downloadButton.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = resizedImage.src;
+      link.download = 'resized-image.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  </script>
+</body>
+</html>
