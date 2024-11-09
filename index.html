@@ -23,7 +23,7 @@
     }
 
     h1 {
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       text-align: center;
       color: #333;
       font-size: 2em;
@@ -31,31 +31,46 @@
 
     .container {
       background-color: #fff;
-      padding: 30px;
+      padding: 20px;
       border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0,0,0,0.1);
       width: 100%;
-      max-width: 800px;
+      max-width: 900px;
+    }
+
+    .menu {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .menu button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      flex: 1 1 150px;
+    }
+
+    .menu button:hover {
+      background-color: #45a049;
     }
 
     .module {
-      margin-bottom: 25px;
+      display: none;
       padding: 20px;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
       background-color: #fafafa;
     }
 
-    .module:last-child {
-      margin-bottom: 0;
-    }
-
-    .module h2 {
-      margin-bottom: 15px;
-      color: #444;
-      font-size: 1.5em;
-      border-bottom: 2px solid #e0e0e0;
-      padding-bottom: 5px;
+    .module.active {
+      display: block;
     }
 
     .input-group {
@@ -81,6 +96,7 @@
       font-size: 1em;
       outline: none;
       transition: border-color 0.3s, box-shadow 0.3s;
+      width: 100%;
     }
 
     input[type="file"]:focus,
@@ -91,59 +107,35 @@
       box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
     }
 
-    button {
+    button.execute-btn {
       background-color: #4CAF50;
       color: white;
       cursor: pointer;
       border: none;
       width: fit-content;
       align-self: flex-start;
+      margin-top: 10px;
     }
 
-    button:hover {
+    button.execute-btn:hover {
       background-color: #45a049;
-    }
-
-    .secondary-button {
-      background-color: #555;
-    }
-
-    .secondary-button:hover {
-      background-color: #333;
-    }
-
-    .images {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
-    }
-
-    .images img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     .download-btn {
       background-color: #2196F3;
+      color: white;
+      cursor: pointer;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      margin-top: 10px;
+      transition: background-color 0.3s;
     }
 
     .download-btn:hover {
       background-color: #0b7dda;
     }
 
-    .controls {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 15px;
-    }
-
-    /* 预览区域样式 */
     .preview {
       display: flex;
       flex-direction: column;
@@ -167,12 +159,12 @@
 
     /* 响应式设计 */
     @media (max-width: 600px) {
-      .controls {
+      .menu {
         flex-direction: column;
       }
 
-      button {
-        width: 100%;
+      .menu button {
+        flex: 1 1 100%;
       }
     }
   </style>
@@ -180,7 +172,16 @@
 <body>
   <h1>苏苏分辨率修改</h1>
   <div class="container">
-    <!-- 图片上传模块 -->
+    <!-- 功能菜单 -->
+    <div class="menu">
+      <button data-module="uploadModule">上传图片</button>
+      <button data-module="resizeModule">调整大小</button>
+      <button data-module="rotateModule">旋转图片</button>
+      <button data-module="compressionModule">压缩质量</button>
+      <button data-module="cropModule">裁剪图片</button>
+    </div>
+
+    <!-- 上传模块 -->
     <div class="module" id="uploadModule">
       <h2>1. 上传图片</h2>
       <div class="input-group">
@@ -193,36 +194,37 @@
     </div>
 
     <!-- 调整大小模块 -->
-    <div class="module" id="resizeModule" style="display: none;">
+    <div class="module" id="resizeModule">
       <h2>2. 调整大小</h2>
-      <div class="controls">
-        <div class="input-group" style="flex: 1;">
-          <label for="widthInput">宽度 (px)</label>
-          <input type="number" id="widthInput" placeholder="例如: 128">
-        </div>
-        <div class="input-group" style="flex: 1;">
-          <label for="heightInput">高度 (px)</label>
-          <input type="number" id="heightInput" placeholder="例如: 128">
-        </div>
+      <div class="input-group">
+        <label for="resizeWidth">宽度 (px)</label>
+        <input type="number" id="resizeWidth" placeholder="例如: 128">
       </div>
+      <div class="input-group">
+        <label for="resizeHeight">高度 (px)</label>
+        <input type="number" id="resizeHeight" placeholder="例如: 128">
+      </div>
+      <button class="execute-btn" id="resizeButton">调整大小</button>
       <div class="preview" id="resizedPreview" style="display: none;">
         <img id="resizedImage" src="#" alt="调整后的图片">
         <div class="preview-details">调整后的图片预览</div>
+        <button class="download-btn" id="downloadResized">下载调整后的图片</button>
       </div>
     </div>
 
     <!-- 旋转模块 -->
-    <div class="module" id="rotateModule" style="display: none;">
+    <div class="module" id="rotateModule">
       <h2>3. 旋转图片</h2>
-      <button id="rotateButton" class="secondary-button">旋转 90°</button>
+      <button class="execute-btn" id="rotateButton">旋转 90°</button>
       <div class="preview" id="rotatedPreview" style="display: none;">
         <img id="rotatedImage" src="#" alt="旋转后的图片">
         <div class="preview-details">旋转后的图片预览</div>
+        <button class="download-btn" id="downloadRotated">下载旋转后的图片</button>
       </div>
     </div>
 
     <!-- 压缩模块 -->
-    <div class="module" id="compressionModule" style="display: none;">
+    <div class="module" id="compressionModule">
       <h2>4. 压缩质量</h2>
       <div class="input-group">
         <label for="compressionRange">压缩质量 (%)</label>
@@ -231,12 +233,13 @@
       <div class="preview" id="compressedPreview" style="display: none;">
         <img id="compressedImage" src="#" alt="压缩后的图片">
         <div class="preview-details">压缩后的图片预览</div>
+        <button class="download-btn" id="downloadCompressed">下载压缩后的图片</button>
       </div>
     </div>
 
     <!-- 裁剪模块 -->
-    <div class="module" id="cropModule" style="display: none;">
-      <h2>5. 裁剪方式</h2>
+    <div class="module" id="cropModule">
+      <h2>5. 裁剪图片</h2>
       <div class="input-group">
         <label for="cropSelect">选择裁剪方式</label>
         <select id="cropSelect">
@@ -245,16 +248,12 @@
           <option value="circle">圆形</option>
         </select>
       </div>
+      <button class="execute-btn" id="cropButton">裁剪图片</button>
       <div class="preview" id="croppedPreview" style="display: none;">
         <img id="croppedImage" src="#" alt="裁剪后的图片">
         <div class="preview-details">裁剪后的图片预览</div>
+        <button class="download-btn" id="downloadCropped">下载裁剪后的图片</button>
       </div>
-    </div>
-
-    <!-- 下载模块 -->
-    <div class="module" id="downloadModule" style="display: none;">
-      <h2>6. 下载图片</h2>
-      <button id="downloadButton" class="download-btn">下载图片</button>
     </div>
   </div>
 
@@ -262,35 +261,65 @@
   <canvas id="canvas" style="display: none;"></canvas>
 
   <script>
-    const imageUpload = document.getElementById('imageUpload');
-    const widthInput = document.getElementById('widthInput');
-    const heightInput = document.getElementById('heightInput');
-    const rotateButton = document.getElementById('rotateButton');
-    const compressionRange = document.getElementById('compressionRange');
-    const cropSelect = document.getElementById('cropSelect');
-    const downloadButton = document.getElementById('downloadButton');
+    // 获取所有功能按钮
+    const menuButtons = document.querySelectorAll('.menu button');
 
+    // 获取所有模块
+    const modules = document.querySelectorAll('.module');
+
+    // 当前原始图片数据
+    let originalImageData = null;
+
+    // 获取原始图片元素
     const originalImage = document.getElementById('originalImage');
-    const resizedImage = document.getElementById('resizedImage');
-    const rotatedImage = document.getElementById('rotatedImage');
-    const compressedImage = document.getElementById('compressedImage');
-    const croppedImage = document.getElementById('croppedImage');
-
     const originalPreview = document.getElementById('originalPreview');
-    const resizeModule = document.getElementById('resizeModule');
-    const rotateModule = document.getElementById('rotateModule');
-    const compressionModule = document.getElementById('compressionModule');
-    const cropModule = document.getElementById('cropModule');
-    const downloadModule = document.getElementById('downloadModule');
 
+    // 获取Canvas和上下文
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
-    let originalImageData = null;
-    let rotation = 0; // 旋转角度，单位为度
-    let compressionQuality = 0.8; // 默认压缩质量
-    let cropMode = 'none'; // 裁剪模式
+    // 上传模块元素
+    const imageUpload = document.getElementById('imageUpload');
 
+    // 调整大小模块元素
+    const resizeWidth = document.getElementById('resizeWidth');
+    const resizeHeight = document.getElementById('resizeHeight');
+    const resizeButton = document.getElementById('resizeButton');
+    const resizedImage = document.getElementById('resizedImage');
+    const resizedPreview = document.getElementById('resizedPreview');
+    const downloadResized = document.getElementById('downloadResized');
+
+    // 旋转模块元素
+    const rotateButton = document.getElementById('rotateButton');
+    const rotatedImage = document.getElementById('rotatedImage');
+    const rotatedPreview = document.getElementById('rotatedPreview');
+    const downloadRotated = document.getElementById('downloadRotated');
+
+    // 压缩模块元素
+    const compressionRange = document.getElementById('compressionRange');
+    const compressedImage = document.getElementById('compressedImage');
+    const compressedPreview = document.getElementById('compressedPreview');
+    const downloadCompressed = document.getElementById('downloadCompressed');
+
+    // 裁剪模块元素
+    const cropSelect = document.getElementById('cropSelect');
+    const cropButton = document.getElementById('cropButton');
+    const croppedImage = document.getElementById('croppedImage');
+    const croppedPreview = document.getElementById('croppedPreview');
+    const downloadCropped = document.getElementById('downloadCropped');
+
+    // 功能菜单点击事件
+    menuButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const targetModule = button.getAttribute('data-module');
+        // 隐藏所有模块
+        modules.forEach(mod => mod.classList.remove('active'));
+        // 显示选中的模块
+        document.getElementById(targetModule).classList.add('active');
+      });
+    });
+
+    // 上传图片
     imageUpload.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -300,81 +329,33 @@
         originalImage.src = event.target.result;
         originalImage.onload = function() {
           originalPreview.style.display = 'flex';
-          resizeModule.style.display = 'block';
-          rotateModule.style.display = 'block';
-          compressionModule.style.display = 'block';
-          cropModule.style.display = 'block';
-          downloadModule.style.display = 'block';
-
-          // 初始化宽度和高度输入框
-          widthInput.value = originalImage.width;
-          heightInput.value = originalImage.height;
           originalImageData = event.target.result;
 
-          // 重置旋转和裁剪
-          rotation = 0;
-          cropMode = 'none';
-          cropSelect.value = 'none';
+          // 初始化功能模块的输入值
+          // 调整大小
+          const resizeModule = document.getElementById('resizeModule');
+          resizeWidth.value = originalImage.width;
+          resizeHeight.value = originalImage.height;
+
+          // 压缩质量
+          compressionRange.value = 80;
 
           // 清除所有预览
-          clearPreviews();
+          clearAllPreviews();
         }
       }
       reader.readAsDataURL(file);
     });
 
-    rotateButton.addEventListener('click', () => {
-      if (!originalImage.src) {
+    // 调整大小功能
+    resizeButton.addEventListener('click', () => {
+      if (!originalImageData) {
         alert('请先上传一张图片。');
         return;
       }
-      rotation = (rotation + 90) % 360;
-      applyTransforms();
-    });
 
-    compressionRange.addEventListener('input', () => {
-      const value = parseInt(compressionRange.value);
-      compressionQuality = value / 100;
-      applyTransforms();
-    });
-
-    cropSelect.addEventListener('change', () => {
-      cropMode = cropSelect.value;
-      applyTransforms();
-    });
-
-    widthInput.addEventListener('input', () => {
-      applyTransforms();
-    });
-
-    heightInput.addEventListener('input', () => {
-      applyTransforms();
-    });
-
-    downloadButton.addEventListener('click', () => {
-      const finalImage = croppedImage.src || compressedImage.src || rotatedImage.src || resizedImage.src || originalImage.src;
-      if (!finalImage) {
-        alert('没有可下载的图片。');
-        return;
-      }
-      const link = document.createElement('a');
-      link.href = finalImage;
-      const mime = finalImage.substring(5, finalImage.indexOf(';'));
-      let extension = 'png';
-      if (mime === 'image/jpeg') {
-        extension = 'jpg';
-      }
-      link.download = `modified-image.${extension}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-
-    function applyTransforms() {
-      if (!originalImage.src) return;
-
-      let newWidth = parseInt(widthInput.value);
-      let newHeight = parseInt(heightInput.value);
+      let newWidth = parseInt(resizeWidth.value);
+      let newHeight = parseInt(resizeHeight.value);
 
       if (isNaN(newWidth) || isNaN(newHeight) || newWidth <= 0 || newHeight <= 0) {
         alert('请输入有效的宽度和高度。');
@@ -382,78 +363,165 @@
       }
 
       const tempImage = new Image();
-      tempImage.src = originalImage.src;
+      tempImage.src = originalImageData;
       tempImage.onload = function() {
-        // 根据旋转角度调整Canvas尺寸
-        if (rotation === 90 || rotation === 270) {
-          canvas.width = newHeight;
-          canvas.height = newWidth;
-        } else {
-          canvas.width = newWidth;
-          canvas.height = newHeight;
-        }
+        canvas.width = newWidth;
+        canvas.height = newHeight;
 
-        // 清画布
+        // 清空画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.save();
-
-        // 移动到画布中心
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        // 旋转
-        ctx.rotate(rotation * Math.PI / 180);
-        // 绘制图片
-        ctx.drawImage(tempImage, -newWidth / 2, -newHeight / 2, newWidth, newHeight);
-        ctx.restore();
-
-        // 应用裁剪
-        if (cropMode !== 'none') {
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.save();
-
-          if (cropMode === 'rounded') {
-            const radius = Math.min(canvas.width, canvas.height) / 10; // 圆角半径
-            ctx.beginPath();
-            roundedRect(ctx, 0, 0, canvas.width, canvas.height, radius);
-            ctx.clip();
-          } else if (cropMode === 'circle') {
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, Math.min(canvas.width, canvas.height) / 2, 0, Math.PI * 2, true);
-            ctx.closePath();
-            ctx.clip();
-          }
-
-          // 将裁剪后的图像绘制回画布
-          ctx.putImageData(imageData, 0, 0);
-          ctx.restore();
-        }
+        // 绘制调整大小后的图片
+        ctx.drawImage(tempImage, 0, 0, newWidth, newHeight);
 
         // 获取调整后的图片URL
-        let mimeType = 'image/png'; // 默认使用PNG以支持透明背景
-        if (cropMode === 'none') {
-          mimeType = 'image/jpeg';
-        }
-
-        const resizedDataURL = canvas.toDataURL(mimeType, compressionQuality);
+        const resizedDataURL = canvas.toDataURL('image/png');
         resizedImage.src = resizedDataURL;
-        resizedImage.parentElement.style.display = 'flex';
-
-        // 更新所有预览
-        rotatedImage.src = resizedDataURL;
-        rotatedImage.parentElement.style.display = 'flex';
-
-        compressedImage.src = resizedDataURL;
-        compressedImage.parentElement.style.display = 'flex';
-
-        if (cropMode !== 'none') {
-          croppedImage.src = resizedDataURL;
-          croppedImage.parentElement.style.display = 'flex';
-        } else {
-          croppedImage.parentElement.style.display = 'none';
-        }
+        resizedPreview.style.display = 'flex';
       }
-    }
+    });
 
+    // 下载调整后的图片
+    downloadResized.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = resizedImage.src;
+      link.download = 'resized-image.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // 旋转功能
+    rotateButton.addEventListener('click', () => {
+      if (!originalImageData) {
+        alert('请先上传一张图片。');
+        return;
+      }
+
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        const rotation = 90; // 每次旋转90度
+        const radians = rotation * Math.PI / 180;
+
+        // 设置Canvas尺寸
+        canvas.width = tempImage.height;
+        canvas.height = tempImage.width;
+
+        // 清空画布并进行旋转
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(radians);
+        ctx.drawImage(tempImage, -tempImage.width / 2, -tempImage.height / 2);
+        ctx.restore();
+
+        // 获取旋转后的图片URL
+        const rotatedDataURL = canvas.toDataURL('image/png');
+        rotatedImage.src = rotatedDataURL;
+        rotatedPreview.style.display = 'flex';
+      }
+    });
+
+    // 下载旋转后的图片
+    downloadRotated.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = rotatedImage.src;
+      link.download = 'rotated-image.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // 压缩功能
+    compressionRange.addEventListener('input', () => {
+      if (!originalImageData) return;
+
+      const quality = compressionRange.value / 100;
+
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        canvas.width = tempImage.width;
+        canvas.height = tempImage.height;
+
+        // 清空画布并绘制图片
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tempImage, 0, 0);
+
+        // 获取压缩后的图片URL
+        const compressedDataURL = canvas.toDataURL('image/jpeg', quality);
+        compressedImage.src = compressedDataURL;
+        compressedPreview.style.display = 'flex';
+      }
+    });
+
+    // 下载压缩后的图片
+    downloadCompressed.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = compressedImage.src;
+      link.download = 'compressed-image.jpg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // 裁剪功能
+    cropButton.addEventListener('click', () => {
+      if (!originalImageData) {
+        alert('请先上传一张图片。');
+        return;
+      }
+
+      const cropMode = cropSelect.value;
+
+      if (cropMode === 'none') {
+        alert('请选择一种裁剪方式。');
+        return;
+      }
+
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        canvas.width = tempImage.width;
+        canvas.height = tempImage.height;
+
+        // 绘制原始图片
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tempImage, 0, 0);
+
+        if (cropMode === 'rounded') {
+          const radius = Math.min(canvas.width, canvas.height) / 10; // 圆角半径
+          ctx.globalCompositeOperation = 'destination-in';
+          roundedRect(ctx, 0, 0, canvas.width, canvas.height, radius);
+          ctx.fill();
+        } else if (cropMode === 'circle') {
+          ctx.globalCompositeOperation = 'destination-in';
+          ctx.beginPath();
+          ctx.arc(canvas.width / 2, canvas.height / 2, Math.min(canvas.width, canvas.height) / 2, 0, Math.PI * 2, true);
+          ctx.fill();
+        }
+
+        // 恢复默认绘图模式
+        ctx.globalCompositeOperation = 'source-over';
+
+        // 获取裁剪后的图片URL
+        const croppedDataURL = canvas.toDataURL('image/png');
+        croppedImage.src = croppedDataURL;
+        croppedPreview.style.display = 'flex';
+      }
+    });
+
+    // 下载裁剪后的图片
+    downloadCropped.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = croppedImage.src;
+      link.download = 'cropped-image.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // 辅助函数：绘制圆角矩形路径
     function roundedRect(ctx, x, y, width, height, radius) {
       ctx.beginPath();
       ctx.moveTo(x + radius, y);
@@ -468,16 +536,23 @@
       ctx.closePath();
     }
 
-    function clearPreviews() {
+    // 辅助函数：清除所有预览
+    function clearAllPreviews() {
+      // 调整大小预览
       resizedImage.src = '';
-      rotatedImage.src = '';
-      compressedImage.src = '';
-      croppedImage.src = '';
+      resizedPreview.style.display = 'none';
 
-      resizedImage.parentElement.style.display = 'none';
-      rotatedImage.parentElement.style.display = 'none';
-      compressedImage.parentElement.style.display = 'none';
-      croppedImage.parentElement.style.display = 'none';
+      // 旋转预览
+      rotatedImage.src = '';
+      rotatedPreview.style.display = 'none';
+
+      // 压缩预览
+      compressedImage.src = '';
+      compressedPreview.style.display = 'none';
+
+      // 裁剪预览
+      croppedImage.src = '';
+      croppedPreview.style.display = 'none';
     }
   </script>
 </body>
