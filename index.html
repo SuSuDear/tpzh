@@ -229,6 +229,7 @@
       transform: translate(-50%, -50%);
       /* 增加可见性 */
       background-color: rgba(76, 175, 80, 0.2);
+      touch-action: none; /* 禁止触摸动作以避免与缩放手势冲突 */
     }
 
     #cropAreaContainer {
@@ -261,7 +262,7 @@
   </style>
 </head>
 <body>
-  <h1>苏苏图片编辑器</h1>
+  <h1>苏苏分辨率修改</h1>
   <div class="container">
     <!-- 功能菜单 -->
     <div class="menu">
@@ -429,13 +430,13 @@
         modules.forEach(mod => mod.classList.remove('active'));
         // 显示选中的模块
         document.getElementById(targetModule).classList.add('active');
-        // 如果切换到裁剪模块且裁剪方式为圆形，显示裁剪区域选择
+        // 如果切换到裁剪模块，显示或隐藏裁剪区域选择
         if(targetModule === 'cropModule') {
           const cropMode = cropSelect.value;
-          if(cropMode === 'circle') {
+          if(cropMode !== 'none') {
             cropAreaContainer.style.display = 'block';
             cropOverlay.style.display = 'block';
-            setupCropArea(); // 确保每次显示裁剪模块时都进行初始化
+            setupCropArea(); // 初始化裁剪区域
           } else {
             cropAreaContainer.style.display = 'none';
             cropOverlay.style.display = 'none';
@@ -660,22 +661,54 @@
       const tempImage = new Image();
       tempImage.src = originalImageData;
       tempImage.onload = function() {
-        if (cropMode === 'rounded') {
-          canvas.width = tempImage.width;
-          canvas.height = tempImage.height;
+        // 获取裁剪框的位置和大小
+        const containerRect = cropAreaContainer.getBoundingClientRect();
+        const imageRect = cropSourceImage.getBoundingClientRect();
+        const overlayRect = cropOverlay.getBoundingClientRect();
 
-          // 绘制原始图片
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(tempImage, 0, 0);
+        // 计算裁剪框在图片中的位置
+        const scaleX = tempImage.width / imageRect.width;
+        const scaleY = tempImage.height / imageRect.height;
 
-          // 应用圆角矩形裁剪
-          const radius = Math.min(canvas.width, canvas.height) / 10; // 圆角半径
-          ctx.globalCompositeOperation = 'destination-in';
+        const cropX = (overlayRect.left - imageRect.left) * scaleX;
+        const cropY = (overlayRect.top - imageRect.top) * scaleY;
+        const cropSize = overlayRect.width * scaleX; // 假设宽高相等
+
+        // 设置Canvas尺寸为裁剪区域的尺寸
+        canvas.width = cropMode === 'circle' ? cropSize : cropSize;
+        canvas.height = cropMode === 'circle' ? cropSize : cropSize;
+
+        // 清空画布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (cropMode === 'circle') {
+          // 绘制圆形裁剪区域
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cropSize / 2, cropSize / 2, cropSize / 2, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+
+          // 绘制图片的裁剪区域
+          ctx.drawImage(tempImage, cropX - cropSize / 2, cropY - cropSize / 2, cropSize, cropSize, 0, 0, cropSize, cropSize);
+
+          ctx.restore();
+
+          // 获取裁剪后的图片URL
+          const croppedDataURL = canvas.toDataURL('image/png');
+          croppedImage.src = croppedDataURL;
+          croppedPreview.style.display = 'flex';
+        } else if (cropMode === 'rounded') {
+          // 绘制圆角矩形裁剪区域
+          const radius = cropSize / 8; // 增加圆角半径，调整以适配iOS图标的弧度
+          ctx.save();
           roundedRect(ctx, 0, 0, canvas.width, canvas.height, radius);
-          ctx.fill();
+          ctx.clip();
 
-          // 恢复默认绘图模式
-          ctx.globalCompositeOperation = 'source-over';
+          // 绘制图片的裁剪区域
+          ctx.drawImage(tempImage, cropX, cropY, cropSize, cropSize, 0, 0, cropSize, cropSize);
+
+          ctx.restore();
 
           // 获取裁剪后的图片URL
           const croppedDataURL = canvas.toDataURL('image/png');
@@ -733,7 +766,7 @@
     // 仅在选择圆形裁剪时启用
     cropSelect.addEventListener('change', () => {
       const cropMode = cropSelect.value;
-      if(cropMode === 'circle') {
+      if(cropMode !== 'none') {
         cropAreaContainer.style.display = 'block';
         cropOverlay.style.display = 'block';
         setupCropArea();
@@ -755,73 +788,140 @@
       }
 
       // 初始化裁剪框参数
-      const cropSize = Math.min(img.width, img.height) / 3;
+      let cropSize = Math.min(img.width, img.height) / 3;
       let cropX = img.width / 2;
       let cropY = img.height / 2;
-      let currentSize = cropSize;
+      let isDragging = false;
+      let isResizing = false;
+      let offsetX, offsetY;
+      let initialDistance = 0;
+      let initialSize = cropSize;
 
       // 设置初始裁剪框样式
-      overlay.style.width = `${currentSize}px`;
-      overlay.style.height = `${currentSize}px`;
-      overlay.style.left = `${cropX}px`;
-      overlay.style.top = `${cropY}px`;
+      updateOverlayPosition();
 
-      // 使裁剪框可以拖动
-      let isDragging = false;
-      let offsetX, offsetY;
-
-      overlay.addEventListener('touchstart', startDrag, false);
+      // 使裁剪框可以拖动和缩放
       overlay.addEventListener('mousedown', startDrag, false);
+      overlay.addEventListener('touchstart', startDrag, false);
+
+      function updateOverlayPosition() {
+        overlay.style.width = `${cropSize}px`;
+        overlay.style.height = `${cropSize}px`;
+        overlay.style.left = `${cropX}px`;
+        overlay.style.top = `${cropY}px`;
+      }
 
       function startDrag(e) {
         e.preventDefault();
-        isDragging = true;
-        const rect = overlay.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        if (e.type === 'mousedown') {
-          offsetX = e.clientX - rect.left;
-          offsetY = e.clientY - rect.top;
-          document.addEventListener('mousemove', onDrag, false);
-          document.addEventListener('mouseup', stopDrag, false);
-        } else if (e.type === 'touchstart') {
-          offsetX = e.touches[0].clientX - rect.left;
-          offsetY = e.touches[0].clientY - rect.top;
-          document.addEventListener('touchmove', onDrag, false);
-          document.addEventListener('touchend', stopDrag, false);
+        const isResizer = e.target.classList.contains('resizer');
+        if (isResizer) {
+          isResizing = true;
+          initialDistance = getPointerDistance(e);
+          initialSize = cropSize;
+        } else {
+          isDragging = true;
+          const rect = overlay.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          if (e.type === 'mousedown') {
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            document.addEventListener('mousemove', onDrag, false);
+            document.addEventListener('mouseup', stopDrag, false);
+          } else if (e.type === 'touchstart') {
+            offsetX = e.touches[0].clientX - rect.left;
+            offsetY = e.touches[0].clientY - rect.top;
+            document.addEventListener('touchmove', onDrag, false);
+            document.addEventListener('touchend', stopDrag, false);
+          }
         }
       }
 
       function onDrag(e) {
-        if (!isDragging) return;
+        if (isDragging) {
+          let clientX, clientY;
+          if (e.type === 'mousemove') {
+            clientX = e.clientX;
+            clientY = e.clientY;
+          } else if (e.type === 'touchmove') {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+          }
 
-        let clientX, clientY;
-        if (e.type === 'mousemove') {
-          clientX = e.clientX;
-          clientY = e.clientY;
-        } else if (e.type === 'touchmove') {
-          clientX = e.touches[0].clientX;
-          clientY = e.touches[0].clientY;
+          const containerRect = container.getBoundingClientRect();
+          let newX = clientX - containerRect.left - offsetX + (cropSize / 2);
+          let newY = clientY - containerRect.top - offsetY + (cropSize / 2);
+
+          // 限制裁剪框在图片范围内
+          newX = Math.max(cropSize / 2, Math.min(img.width - cropSize / 2, newX));
+          newY = Math.max(cropSize / 2, Math.min(img.height - cropSize / 2, newY));
+
+          cropX = newX;
+          cropY = newY;
+          updateOverlayPosition();
+        } else if (isResizing) {
+          const currentDistance = getPointerDistance(e);
+          const delta = currentDistance - initialDistance;
+          let newSize = initialSize + delta;
+          newSize = Math.max(50, newSize); // 设置最小裁剪框大小
+          newSize = Math.min(img.width, img.height, newSize); // 最大裁剪框大小
+          cropSize = newSize;
+
+          // 确保裁剪框在图片范围内
+          cropX = Math.max(cropSize / 2, Math.min(img.width - cropSize / 2, cropX));
+          cropY = Math.max(cropSize / 2, Math.min(img.height - cropSize / 2, cropY));
+
+          updateOverlayPosition();
         }
-
-        const containerRect = container.getBoundingClientRect();
-        let newX = clientX - containerRect.left - offsetX + (currentSize / 2);
-        let newY = clientY - containerRect.top - offsetY + (currentSize / 2);
-
-        // 限制裁剪框在图片范围内
-        newX = Math.max(currentSize / 2, Math.min(img.width - currentSize / 2, newX));
-        newY = Math.max(currentSize / 2, Math.min(img.height - currentSize / 2, newY));
-
-        overlay.style.left = `${newX}px`;
-        overlay.style.top = `${newY}px`;
       }
 
       function stopDrag() {
         isDragging = false;
+        isResizing = false;
         document.removeEventListener('mousemove', onDrag, false);
         document.removeEventListener('mouseup', stopDrag, false);
         document.removeEventListener('touchmove', onDrag, false);
         document.removeEventListener('touchend', stopDrag, false);
       }
+
+      function getPointerDistance(e) {
+        if (e.touches && e.touches.length >= 2) {
+          const dx = e.touches[0].clientX - e.touches[1].clientX;
+          const dy = e.touches[0].clientY - e.touches[1].clientY;
+          return Math.sqrt(dx * dx + dy * dy);
+        } else {
+          return 0;
+        }
+      }
+
+      // 添加缩放手势支持（双指缩放）
+      container.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 2 && cropSelect.value === 'circle') {
+          e.preventDefault();
+          const currentDistance = getPointerDistance(e);
+          if (initialDistance === 0) {
+            initialDistance = currentDistance;
+            initialSize = cropSize;
+          } else {
+            const delta = currentDistance - initialDistance;
+            let newSize = initialSize + delta;
+            newSize = Math.max(50, newSize); // 最小尺寸
+            newSize = Math.min(img.width, img.height, newSize); // 最大尺寸
+            cropSize = newSize;
+
+            // 确保裁剪框在图片范围内
+            cropX = Math.max(cropSize / 2, Math.min(img.width - cropSize / 2, cropX));
+            cropY = Math.max(cropSize / 2, Math.min(img.height - cropSize / 2, cropY));
+
+            updateOverlayPosition();
+          }
+        }
+      }, { passive: false });
+
+      container.addEventListener('touchend', function(e) {
+        if (e.touches.length < 2) {
+          initialDistance = 0;
+        }
+      }, false);
     }
   </script>
 </body>
