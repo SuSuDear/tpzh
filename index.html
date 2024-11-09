@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>苏苏分辨率修改</title>
+  <title>苏苏图片编辑器</title>
   <style>
     /* Reset和基础样式 */
     * {
@@ -372,7 +372,7 @@
     const downloadCropped = document.getElementById('downloadCropped');
     const cropAreaContainer = document.getElementById('cropAreaContainer');
     const cropSourceImage = document.getElementById('cropSourceImage');
-    const cropOverlay = document.getElementById('bulkOverlay');
+    const cropOverlay = document.getElementById('cropOverlay'); // 修正后的 ID
 
     // 功能菜单点击事件
     menuButtons.forEach(button => {
@@ -391,11 +391,15 @@
           const cropMode = cropSelect.value;
           if(cropMode === 'circle') {
             cropAreaContainer.style.display = 'block';
+            cropOverlay.style.display = 'block';
+            setupCropArea(); // 确保每次显示裁剪模块时都进行初始化
           } else {
             cropAreaContainer.style.display = 'none';
+            cropOverlay.style.display = 'none';
           }
         } else {
           cropAreaContainer.style.display = 'none';
+          cropOverlay.style.display = 'none';
         }
       });
     });
@@ -645,16 +649,24 @@
       const cropMode = cropSelect.value;
       if(cropMode === 'circle') {
         cropAreaContainer.style.display = 'block';
+        cropOverlay.style.display = 'block';
         setupCropArea();
       } else {
         cropAreaContainer.style.display = 'none';
+        cropOverlay.style.display = 'none';
       }
     });
 
     function setupCropArea() {
-      cropOverlay.style.display = 'block';
       const img = cropSourceImage;
       const container = cropAreaContainer;
+      const overlay = document.getElementById('circleOverlay');
+
+      // 确保图片已加载
+      if (!img.complete) {
+        img.onload = setupCropArea;
+        return;
+      }
 
       // 初始化裁剪框参数
       const cropSize = Math.min(img.width, img.height) / 3;
@@ -663,7 +675,6 @@
       let currentSize = cropSize;
 
       // 设置初始裁剪框样式
-      const overlay = document.getElementById('circleOverlay');
       overlay.style.width = `${currentSize}px`;
       overlay.style.height = `${currentSize}px`;
       overlay.style.left = `${cropX}px`;
@@ -673,16 +684,19 @@
       let isDragging = false;
       let offsetX, offsetY;
 
-      overlay.addEventListener('mousedown', (e) => {
+      overlay.onmousedown = function(e) {
         isDragging = true;
-        offsetX = e.clientX - overlay.offsetLeft;
-        offsetY = e.clientY - overlay.offsetTop;
-      });
+        const rect = overlay.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        e.preventDefault(); // 防止选中文本
+      }
 
-      document.addEventListener('mousemove', (e) => {
+      document.onmousemove = function(e) {
         if (isDragging) {
-          let newX = e.clientX - container.getBoundingClientRect().left - offsetX;
-          let newY = e.clientY - container.getBoundingClientRect().top - offsetY;
+          const containerRect = container.getBoundingClientRect();
+          let newX = e.clientX - containerRect.left - offsetX + (currentSize / 2);
+          let newY = e.clientY - containerRect.top - offsetY + (currentSize / 2);
 
           // 限制裁剪框在图片范围内
           newX = Math.max(currentSize / 2, Math.min(img.width - currentSize / 2, newX));
@@ -691,14 +705,14 @@
           overlay.style.left = `${newX}px`;
           overlay.style.top = `${newY}px`;
         }
-      });
+      }
 
-      document.addEventListener('mouseup', () => {
+      document.onmouseup = function() {
         isDragging = false;
-      });
+      }
 
       // 裁剪图片
-      cropButton.addEventListener('click', () => {
+      cropButton.onclick = function() {
         const cropMode = cropSelect.value;
         if(cropMode === 'circle') {
           // 获取裁剪框位置和大小
@@ -709,7 +723,7 @@
           const centerY = rect.top - containerRect.top + rect.height / 2;
           const radius = rect.width / 2;
 
-          // 绘制圆形裁剪
+          // 设置Canvas为裁剪区域大小
           canvas.width = radius * 2;
           canvas.height = radius * 2;
           ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -719,7 +733,7 @@
           ctx.closePath();
           ctx.clip();
 
-          // 绘制裁剪区域
+          // 绘制裁剪区域的图片部分
           ctx.drawImage(
             cropSourceImage,
             centerX - radius,
@@ -741,9 +755,8 @@
         } else if(cropMode === 'rounded') {
           // 已在按钮点击事件中处理
         }
-      });
+      }
     }
-
   </script>
 </body>
 </html>
