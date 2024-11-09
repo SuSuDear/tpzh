@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>苏苏分辨率修改</title>
+  <title>苏苏编辑器</title>
   <style>
     /* Reset和基础样式 */
     * {
@@ -34,7 +34,7 @@
       border-radius: 10px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       width: 100%;
-      max-width: 400px;
+      max-width: 500px;
     }
 
     .input-group {
@@ -48,7 +48,9 @@
     }
 
     input[type="file"],
-    input[type="number"] {
+    input[type="number"],
+    select,
+    input[type="range"] {
       width: 100%;
       padding: 10px;
       border: 1px solid #ddd;
@@ -65,10 +67,19 @@
       font-size: 16px;
       cursor: pointer;
       transition: background-color 0.3s;
+      margin-bottom: 10px;
     }
 
     button:hover {
       background-color: #45a049;
+    }
+
+    .secondary-button {
+      background-color: #555;
+    }
+
+    .secondary-button:hover {
+      background-color: #333;
     }
 
     .images {
@@ -93,6 +104,13 @@
       background-color: #0b7dda;
     }
 
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
     @media (max-width: 500px) {
       .container {
         padding: 15px;
@@ -102,17 +120,23 @@
         font-size: 14px;
         padding: 8px;
       }
+
+      .controls {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>苏苏分辨率修改</h1>
+  <h1>苏苏图片编辑器</h1>
   <div class="container">
+    <!-- 图片上传 -->
     <div class="input-group">
       <label for="imageUpload">上传图片</label>
       <input type="file" id="imageUpload" accept="image/*">
     </div>
 
+    <!-- 宽度和高度输入 -->
     <div class="input-group">
       <label for="widthInput">宽度 (px)</label>
       <input type="number" id="widthInput" placeholder="例如: 128">
@@ -123,8 +147,31 @@
       <input type="number" id="heightInput" placeholder="例如: 128">
     </div>
 
+    <!-- 旋转按钮 -->
+    <div class="input-group">
+      <button id="rotateButton" class="secondary-button">旋转 90°</button>
+    </div>
+
+    <!-- 压缩质量 -->
+    <div class="input-group">
+      <label for="compressionRange">压缩质量 (%)</label>
+      <input type="range" id="compressionRange" min="10" max="100" value="80">
+    </div>
+
+    <!-- 裁剪方式 -->
+    <div class="input-group">
+      <label for="cropSelect">裁剪方式</label>
+      <select id="cropSelect">
+        <option value="none">无裁剪</option>
+        <option value="rounded">圆角矩形</option>
+        <option value="circle">圆形</option>
+      </select>
+    </div>
+
+    <!-- 调整大小按钮 -->
     <button id="resizeButton">调整大小</button>
 
+    <!-- 预览和下载 -->
     <div class="images">
       <div id="originalImageContainer" style="display: none;">
         <h2>原始图片</h2>
@@ -146,6 +193,9 @@
     const imageUpload = document.getElementById('imageUpload');
     const widthInput = document.getElementById('widthInput');
     const heightInput = document.getElementById('heightInput');
+    const rotateButton = document.getElementById('rotateButton');
+    const compressionRange = document.getElementById('compressionRange');
+    const cropSelect = document.getElementById('cropSelect');
     const resizeButton = document.getElementById('resizeButton');
     const originalImageContainer = document.getElementById('originalImageContainer');
     const originalImage = document.getElementById('originalImage');
@@ -156,6 +206,9 @@
     const ctx = canvas.getContext('2d');
 
     let originalImageData = null;
+    let rotation = 0; // 旋转角度，单位为度
+    let compressionQuality = 0.8; // 默认压缩质量
+    let cropMode = 'none'; // 裁剪模式
 
     imageUpload.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -170,46 +223,145 @@
           widthInput.value = originalImage.width;
           heightInput.value = originalImage.height;
           originalImageData = event.target.result;
+          // 重置旋转和裁剪
+          rotation = 0;
+          cropMode = 'none';
+          cropSelect.value = 'none';
         }
       }
       reader.readAsDataURL(file);
+    });
+
+    rotateButton.addEventListener('click', () => {
+      if (!originalImage.src) {
+        alert('请先上传一张图片。');
+        return;
+      }
+      rotation = (rotation + 90) % 360;
+      // 更新宽度和高度输入框
+      if (rotation === 90 || rotation === 270) {
+        widthInput.value = originalImage.height;
+        heightInput.value = originalImage.width;
+      } else {
+        widthInput.value = originalImage.width;
+        heightInput.value = originalImage.height;
+      }
+    });
+
+    compressionRange.addEventListener('input', () => {
+      const value = parseInt(compressionRange.value);
+      compressionQuality = value / 100;
+    });
+
+    cropSelect.addEventListener('change', () => {
+      cropMode = cropSelect.value;
     });
 
     resizeButton.addEventListener('click', () => {
       if (!originalImage.src) {
         alert('请先上传一张图片。');
         return;
+      
       }
 
-      const newWidth = parseInt(widthInput.value);
-      const newHeight = parseInt(heightInput.value);
+      let newWidth = parseInt(widthInput.value);
+      let newHeight = parseInt(heightInput.value);
 
       if (isNaN(newWidth) || isNaN(newHeight) || newWidth <= 0 || newHeight <= 0) {
         alert('请输入有效的宽度和高度。');
         return;
       }
 
-      // 设置Canvas尺寸
-      canvas.width = newWidth;
-      canvas.height = newHeight;
+      // 创建一个临时Image对象以处理旋转
+      const tempImage = new Image();
+      tempImage.src = originalImage.src;
+      tempImage.onload = function() {
+        // 根据旋转角度调整Canvas尺寸
+        if (rotation === 90 || rotation === 270) {
+          canvas.width = newHeight;
+          canvas.height = newWidth;
+        } else {
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+        }
 
-      // 把图片绘制到Canvas上
-      ctx.drawImage(originalImage, 0, 0, newWidth, newHeight);
+        // 清画布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
 
-      // 获取调整后的图片URL
-      const resizedDataURL = canvas.toDataURL('image/png');
-      resizedImage.src = resizedDataURL;
-      resizedImageContainer.style.display = 'block';
+        // 移动到画布中心
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        // 旋转
+        ctx.rotate(rotation * Math.PI / 180);
+        // 绘制图片
+        ctx.drawImage(tempImage, -newWidth / 2, -newHeight / 2, newWidth, newHeight);
+        ctx.restore();
+
+        // 应用裁剪
+        if (cropMode !== 'none') {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.save();
+
+          if (cropMode === 'rounded') {
+            const radius = Math.min(canvas.width, canvas.height) / 10; // 圆角半径
+            ctx.beginPath();
+            roundedRect(ctx, 0, 0, canvas.width, canvas.height, radius);
+            ctx.clip();
+          } else if (cropMode === 'circle') {
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, Math.min(canvas.width, canvas.height) / 2, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.clip();
+          }
+
+          // 将裁剪后的图像绘制回画布
+          ctx.putImageData(imageData, 0, 0);
+          ctx.restore();
+        }
+
+        // 获取调整后的图片URL
+        let mimeType = 'image/png'; // 默认使用PNG以支持透明背景
+        if (cropMode === 'none') {
+          // 如果不需要透明背景，可以使用JPEG以获取更好的压缩效果
+          mimeType = 'image/jpeg';
+        }
+
+        const resizedDataURL = canvas.toDataURL(mimeType, compressionQuality);
+        resizedImage.src = resizedDataURL;
+        resizedImageContainer.style.display = 'block';
+      }
     });
 
     downloadButton.addEventListener('click', () => {
       const link = document.createElement('a');
       link.href = resizedImage.src;
-      link.download = 'resized-image.png';
+      // 根据MIME类型设置默认文件扩展名
+      const mime = resizedImage.src.substring(5, resizedImage.src.indexOf(';'));
+      let extension = 'png';
+      if (mime === 'image/jpeg') {
+        extension = 'jpg';
+      }
+      link.download = `resized-image.${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     });
+
+    // 辅助函数：绘制圆角矩形路径
+    function roundedRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
   </script>
 </body>
 </html>
