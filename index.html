@@ -139,6 +139,28 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
+    /* 新增的复原按钮样式 */
+    button.restore-btn {
+      background-color: #f44336;
+      color: white;
+      cursor: pointer;
+      border: none;
+      width: fit-content;
+      align-self: flex-start;
+      margin-top: 10px;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background-color 0.3s, transform 0.2s;
+      margin-left: 10px;
+    }
+
+    button.restore-btn:hover {
+      background-color: #d32f2f;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
     .download-btn {
       background-color: #2196F3;
       color: white;
@@ -198,11 +220,6 @@
 
     /* 圆形裁剪预览框 */
     .crop-area {
-      position: relative;
-      display: inline-block;
-    }
-
-    .crop-overlay {
       position: absolute;
       border: 2px dashed #4CAF50;
       border-radius: 50%;
@@ -256,7 +273,10 @@
         <label for="resizeHeight">高度 (px)</label>
         <input type="number" id="resizeHeight" placeholder="例如: 128">
       </div>
-      <button class="execute-btn" id="resizeButton">调整大小</button>
+      <div style="display: flex; align-items: center;">
+        <button class="execute-btn" id="resizeButton">调整大小</button>
+        <button class="restore-btn" id="restoreResizeButton">复原</button>
+      </div>
       <div class="preview" id="resizedPreview" style="display: none;">
         <img id="resizedImage" src="#" alt="调整后的图片">
         <div class="preview-details">调整后的图片预览</div>
@@ -267,7 +287,10 @@
     <!-- 旋转模块 -->
     <div class="module" id="rotateModule">
       <h2>旋转图片</h2>
-      <button class="execute-btn" id="rotateButton">旋转 90°</button>
+      <div style="display: flex; align-items: center;">
+        <button class="execute-btn" id="rotateButton">旋转 90°</button>
+        <button class="restore-btn" id="restoreRotateButton">复原</button>
+      </div>
       <div class="preview" id="rotatedPreview" style="display: none;">
         <img id="rotatedImage" src="#" alt="旋转后的图片">
         <div class="preview-details">旋转后的图片预览</div>
@@ -312,9 +335,7 @@
       <!-- 圆形裁剪区域选择 -->
       <div id="cropAreaContainer" style="display: none; position: relative; margin-top: 20px;">
         <img id="cropSourceImage" src="#" alt="裁剪源图片" style="max-width: 100%; border-radius: 8px;">
-        <div class="crop-area" id="cropOverlay" style="display: none;">
-          <div class="crop-overlay" id="circleOverlay"></div>
-        </div>
+        <div class="crop-area" id="circleOverlay"></div>
       </div>
     </div>
   </div>
@@ -347,12 +368,14 @@
     const resizeWidth = document.getElementById('resizeWidth');
     const resizeHeight = document.getElementById('resizeHeight');
     const resizeButton = document.getElementById('resizeButton');
+    const restoreResizeButton = document.getElementById('restoreResizeButton'); // 新增
     const resizedImage = document.getElementById('resizedImage');
     const resizedPreview = document.getElementById('resizedPreview');
     const downloadResized = document.getElementById('downloadResized');
 
     // 旋转模块元素
     const rotateButton = document.getElementById('rotateButton');
+    const restoreRotateButton = document.getElementById('restoreRotateButton'); // 新增
     const rotatedImage = document.getElementById('rotatedImage');
     const rotatedPreview = document.getElementById('rotatedPreview');
     const downloadRotated = document.getElementById('downloadRotated');
@@ -372,7 +395,7 @@
     const downloadCropped = document.getElementById('downloadCropped');
     const cropAreaContainer = document.getElementById('cropAreaContainer');
     const cropSourceImage = document.getElementById('cropSourceImage');
-    const cropOverlay = document.getElementById('cropOverlay'); // 修正后的 ID
+    const cropOverlay = document.getElementById('circleOverlay'); // 修正后的 ID
 
     // 功能菜单点击事件
     menuButtons.forEach(button => {
@@ -428,6 +451,9 @@
           // 显示裁剪源图片
           cropSourceImage.src = originalImageData;
 
+          // 重置旋转角度
+          currentRotation = 0;
+
           // 清除所有预览
           clearAllPreviews();
         }
@@ -468,6 +494,21 @@
       }
     });
 
+    // 复原调整大小
+    restoreResizeButton.addEventListener('click', () => {
+      if (!originalImageData) return;
+
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        resizeWidth.value = tempImage.width;
+        resizeHeight.value = tempImage.height;
+      }
+
+      resizedImage.src = '';
+      resizedPreview.style.display = 'none';
+    });
+
     // 下载调整后的图片
     downloadResized.addEventListener('click', () => {
       const link = document.createElement('a');
@@ -479,27 +520,34 @@
     });
 
     // 旋转功能
+
+    let currentRotation = 0; // 存储当前旋转角度
+
     rotateButton.addEventListener('click', () => {
       if (!originalImageData) {
         alert('请先上传一张图片。');
         return;
       }
 
+      currentRotation = (currentRotation + 90) % 360; // 每次增加90度
+
       const tempImage = new Image();
       tempImage.src = originalImageData;
       tempImage.onload = function() {
-        const rotation = 90; // 每次旋转90度
-        const radians = rotation * Math.PI / 180;
-
-        // 设置Canvas尺寸
-        canvas.width = tempImage.height;
-        canvas.height = tempImage.width;
+        // 计算Canvas尺寸
+        if (currentRotation % 180 === 0) {
+          canvas.width = tempImage.width;
+          canvas.height = tempImage.height;
+        } else {
+          canvas.width = tempImage.height;
+          canvas.height = tempImage.width;
+        }
 
         // 清空画布并进行旋转
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save();
         ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(radians);
+        ctx.rotate(currentRotation * Math.PI / 180);
         ctx.drawImage(tempImage, -tempImage.width / 2, -tempImage.height / 2);
         ctx.restore();
 
@@ -507,6 +555,27 @@
         const rotatedDataURL = canvas.toDataURL('image/png');
         rotatedImage.src = rotatedDataURL;
         rotatedPreview.style.display = 'flex';
+      }
+    });
+
+    // 复原旋转
+    restoreRotateButton.addEventListener('click', () => {
+      if (!originalImageData) return;
+
+      currentRotation = 0; // 重置旋转角度
+
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        canvas.width = tempImage.width;
+        canvas.height = tempImage.height;
+
+        // 清空画布并绘制原始图片
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tempImage, 0, 0);
+
+        rotatedImage.src = '';
+        rotatedPreview.style.display = 'none';
       }
     });
 
