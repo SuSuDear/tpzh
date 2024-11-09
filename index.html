@@ -220,11 +220,10 @@
       color: #333;
     }
 
-    /* 圆形裁剪预览框 */
+    /* 矩形裁剪预览框 */
     .crop-area {
       position: absolute;
       border: 2px dashed #4CAF50;
-      border-radius: 50%;
       cursor: move;
       transform: translate(-50%, -50%);
       /* 增加可见性 */
@@ -345,13 +344,13 @@
         <label for="cropSelect">选择裁剪方式</label>
         <select id="cropSelect">
           <option value="none">无裁剪</option>
-          <option value="rounded">圆角矩形</option>
+          <option value="rectangle">矩形</option>
           <option value="circle">圆形</option>
         </select>
       </div>
       <div id="cropAreaContainer" style="display: none;">
         <img id="cropSourceImage" src="#" alt="裁剪源图片">
-        <div class="crop-area" id="circleOverlay"></div>
+        <div class="crop-area" id="rectangleOverlay"></div>
       </div>
       <button class="execute-btn" id="cropButton">裁剪图片</button>
       <div class="preview" id="croppedPreview" style="display: none;">
@@ -416,7 +415,7 @@
     const croppedPreview = document.getElementById('croppedPreview');
     const cropAreaContainer = document.getElementById('cropAreaContainer');
     const cropSourceImage = document.getElementById('cropSourceImage');
-    const cropOverlay = document.getElementById('circleOverlay');
+    const cropOverlay = document.getElementById('rectangleOverlay');
 
     // 功能菜单点击事件
     menuButtons.forEach(button => {
@@ -517,45 +516,29 @@
 
     // 复原调整大小
     restoreResizeButton.addEventListener('click', () => {
-      if (!originalImageData) return;
-
-      const tempImage = new Image();
-      tempImage.src = originalImageData;
-      tempImage.onload = function() {
-        resizeWidth.value = tempImage.width;
-        resizeHeight.value = tempImage.height;
+      if (!originalImageData      ) {
+        alert('请先上传一张图片。');
+        return;
       }
 
-      resizedImage.src = '';
+      resizeWidth.value = originalImage.width;
+      resizeHeight.value = originalImage.height;
       resizedPreview.style.display = 'none';
     });
 
-    // 下载调整后的图片
-    downloadResized.addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.href = resizedImage.src;
-      link.download = 'resized-image.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-
-    // 旋转功能
-
-    let currentRotation = 0; // 存储当前旋转角度
-
+    // 旋转图片功能
+    let currentRotation = 0;
     rotateButton.addEventListener('click', () => {
       if (!originalImageData) {
         alert('请先上传一张图片。');
         return;
       }
 
-      currentRotation = (currentRotation + 90) % 360; // 每次增加90度
+      currentRotation = (currentRotation + 90) % 360;
 
       const tempImage = new Image();
       tempImage.src = originalImageData;
       tempImage.onload = function() {
-        // 计算Canvas尺寸
         if (currentRotation % 180 === 0) {
           canvas.width = tempImage.width;
           canvas.height = tempImage.height;
@@ -564,11 +547,13 @@
           canvas.height = tempImage.width;
         }
 
-        // 清空画布并进行旋转
+        // 清空画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 旋转上下文
         ctx.save();
         ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(currentRotation * Math.PI / 180);
+        ctx.rotate((currentRotation * Math.PI) / 180);
         ctx.drawImage(tempImage, -tempImage.width / 2, -tempImage.height / 2);
         ctx.restore();
 
@@ -581,41 +566,27 @@
 
     // 复原旋转
     restoreRotateButton.addEventListener('click', () => {
-      if (!originalImageData) return;
-
-      currentRotation = 0; // 重置旋转角度
-
-      const tempImage = new Image();
-      tempImage.src = originalImageData;
-      tempImage.onload = function() {
-        canvas.width = tempImage.width;
-        canvas.height = tempImage.height;
-
-        // 清空画布并绘制原始图片
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(tempImage, 0, 0);
-
-        rotatedImage.src = '';
-        rotatedPreview.style.display = 'none';
+      if (!originalImageData) {
+        alert('请先上传一张图片。');
+        return;
       }
-    });
 
-    // 下载旋转后的图片
-    downloadRotated.addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.href = rotatedImage.src;
-      link.download = 'rotated-image.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      currentRotation = 0;
+      rotatedPreview.style.display = 'none';
     });
 
     // 压缩功能
     compressionRange.addEventListener('input', () => {
-      if (!originalImageData) return;
+      compressionPercentage.textContent = `${compressionRange.value}%`;
+    });
+
+    compressionRange.addEventListener('change', () => {
+      if (!originalImageData) {
+        alert('请先上传一张图片。');
+        return;
+      }
 
       const quality = compressionRange.value / 100;
-      compressionPercentage.textContent = `${compressionRange.value}%`;
 
       const tempImage = new Image();
       tempImage.src = originalImageData;
@@ -623,8 +594,9 @@
         canvas.width = tempImage.width;
         canvas.height = tempImage.height;
 
-        // 清空画布并绘制图片
+        // 清空画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 绘制原始图像
         ctx.drawImage(tempImage, 0, 0);
 
         // 获取压缩后的图片URL
@@ -632,16 +604,6 @@
         compressedImage.src = compressedDataURL;
         compressedPreview.style.display = 'flex';
       }
-    });
-
-    // 下载压缩后的图片
-    downloadCompressed.addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.href = compressedImage.src;
-      link.download = 'compressed-image.jpg';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
     });
 
     // 裁剪功能
@@ -661,267 +623,122 @@
       const tempImage = new Image();
       tempImage.src = originalImageData;
       tempImage.onload = function() {
-        // 获取裁剪框的位置和大小
-        const containerRect = cropAreaContainer.getBoundingClientRect();
         const imageRect = cropSourceImage.getBoundingClientRect();
         const overlayRect = cropOverlay.getBoundingClientRect();
 
-        // 计算裁剪框在图片中的位置
         const scaleX = tempImage.width / imageRect.width;
         const scaleY = tempImage.height / imageRect.height;
 
         const cropX = (overlayRect.left - imageRect.left) * scaleX;
         const cropY = (overlayRect.top - imageRect.top) * scaleY;
-        const cropSize = overlayRect.width * scaleX; // 假设宽高相等
+        const cropWidth = overlayRect.width * scaleX;
+        const cropHeight = overlayRect.height * scaleY;
 
-        // 设置Canvas尺寸为裁剪区域的尺寸
-        canvas.width = cropMode === 'circle' ? cropSize : cropSize;
-        canvas.height = cropMode === 'circle' ? cropSize : cropSize;
+        canvas.width = cropWidth;
+        canvas.height = cropHeight;
 
-        // 清空画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (cropMode === 'circle') {
-          // 绘制圆形裁剪区域
           ctx.save();
           ctx.beginPath();
-          ctx.arc(cropSize / 2, cropSize / 2, cropSize / 2, 0, Math.PI * 2);
+          ctx.arc(cropWidth / 2, cropHeight / 2, Math.min(cropWidth, cropHeight) / 2, 0, Math.PI * 2);
           ctx.closePath();
           ctx.clip();
 
-          // 绘制图片的裁剪区域
-          ctx.drawImage(tempImage, cropX - cropSize / 2, cropY - cropSize / 2, cropSize, cropSize, 0, 0, cropSize, cropSize);
-
+          ctx.drawImage(tempImage, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
           ctx.restore();
-
-          // 获取裁剪后的图片URL
-          const croppedDataURL = canvas.toDataURL('image/png');
-          croppedImage.src = croppedDataURL;
-          croppedPreview.style.display = 'flex';
-        } else if (cropMode === 'rounded') {
-          // 绘制圆角矩形裁剪区域
-          const radius = cropSize / 8; // 增加圆角半径，调整以适配iOS图标的弧度
-          ctx.save();
-          roundedRect(ctx, 0, 0, canvas.width, canvas.height, radius);
-          ctx.clip();
-
-          // 绘制图片的裁剪区域
-          ctx.drawImage(tempImage, cropX, cropY, cropSize, cropSize, 0, 0, cropSize, cropSize);
-
-          ctx.restore();
-
-          // 获取裁剪后的图片URL
-          const croppedDataURL = canvas.toDataURL('image/png');
-          croppedImage.src = croppedDataURL;
-          croppedPreview.style.display = 'flex';
+        } else if (cropMode === 'rectangle') {
+          ctx.drawImage(tempImage, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
         }
+
+        const croppedDataURL = canvas.toDataURL('image/png');
+        croppedImage.src = croppedDataURL;
+        croppedPreview.style.display = 'flex';
       }
     });
 
-    // 下载裁剪后的图片
-    downloadCropped.addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.href = croppedImage.src;
-      link.download = 'cropped-image.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-
-    // 辅助函数：绘制圆角矩形路径
-    function roundedRect(ctx, x, y, width, height, radius) {
-      ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.lineTo(x + width - radius, y);
-      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-      ctx.lineTo(x + width, y + height - radius);
-      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-      ctx.lineTo(x + radius, y + height);
-      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-      ctx.lineTo(x, y + radius);
-      ctx.quadraticCurveTo(x, y, x + radius, y);
-      ctx.closePath();
-    }
-
-    // 辅助函数：清除所有预览
-    function clearAllPreviews() {
-      // 调整大小预览
-      resizedImage.src = '';
-      resizedPreview.style.display = 'none';
-
-      // 旋转预览
-      rotatedImage.src = '';
-      rotatedPreview.style.display = 'none';
-
-      // 压缩预览
-      compressedImage.src = '';
-      compressedPreview.style.display = 'none';
-
-      // 裁剪预览
-      croppedImage.src = '';
-      croppedPreview.style.display = 'none';
-    }
-
-    // 裁剪模块增强：圆形裁剪手动拖动选择
-    // 仅在选择圆形裁剪时启用
-    cropSelect.addEventListener('change', () => {
-      const cropMode = cropSelect.value;
-      if(cropMode !== 'none') {
-        cropAreaContainer.style.display = 'block';
-        cropOverlay.style.display = 'block';
-        setupCropArea();
-      } else {
-        cropAreaContainer.style.display = 'none';
-        cropOverlay.style.display = 'none';
-      }
-    });
-
+    // 设置裁剪区域
     function setupCropArea() {
       const img = cropSourceImage;
       const container = cropAreaContainer;
-      const overlay = document.getElementById('circleOverlay');
+      const overlay = document.getElementById('rectangleOverlay');
 
-      // 确保图片已加载
       if (!img.complete) {
         img.onload = setupCropArea;
         return;
       }
 
-      // 初始化裁剪框参数
-      let cropSize = Math.min(img.width, img.height) / 3;
-      let cropX = img.width / 2;
-      let cropY = img.height / 2;
+      let cropWidth = img.width / 3;
+      let cropHeight = img.height / 3;
+      let cropX = img.width / 2 - cropWidth / 2;
+      let cropY = img.height / 2 - cropHeight / 2;
       let isDragging = false;
-      let isResizing = false;
       let offsetX, offsetY;
-      let initialDistance = 0;
-      let initialSize = cropSize;
 
-      // 设置初始裁剪框样式
       updateOverlayPosition();
 
-      // 使裁剪框可以拖动和缩放
       overlay.addEventListener('mousedown', startDrag, false);
-      overlay.addEventListener('touchstart', startDrag, false);
 
       function updateOverlayPosition() {
-        overlay.style.width = `${cropSize}px`;
-        overlay.style.height = `${cropSize}px`;
+        overlay.style.width = `${cropWidth}px`;
+        overlay.style.height = `${cropHeight}px`;
         overlay.style.left = `${cropX}px`;
         overlay.style.top = `${cropY}px`;
       }
 
       function startDrag(e) {
         e.preventDefault();
-        const isResizer = e.target.classList.contains('resizer');
-        if (isResizer) {
-          isResizing = true;
-          initialDistance = getPointerDistance(e);
-          initialSize = cropSize;
-        } else {
-          isDragging = true;
-          const rect = overlay.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          if (e.type === 'mousedown') {
-            offsetX = e.clientX - rect.left;
-            offsetY = e.clientY - rect.top;
-            document.addEventListener('mousemove', onDrag, false);
-            document.addEventListener('mouseup', stopDrag, false);
-          } else if (e.type === 'touchstart') {
-            offsetX = e.touches[0].clientX - rect.left;
-            offsetY = e.touches[0].clientY - rect.top;
-            document.addEventListener('touchmove', onDrag, false);
-            document.addEventListener('touchend', stopDrag, false);
-          }
-        }
+        isDragging = true;
+        const rect = overlay.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+
+        document.addEventListener('mousemove', onDrag, false);
+        document.addEventListener('mouseup', stopDrag, false);
       }
 
       function onDrag(e) {
-        if (isDragging) {
-          let clientX, clientY;
-          if (e.type === 'mousemove') {
-            clientX = e.clientX;
-            clientY = e.clientY;
-          } else if (e.type === 'touchmove') {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-          }
+        if (!isDragging) return;
 
-          const containerRect = container.getBoundingClientRect();
-          let newX = clientX - containerRect.left - offsetX + (cropSize / 2);
-          let newY = clientY - containerRect.top - offsetY + (cropSize / 2);
+        const containerRect = container.getBoundingClientRect();
+        let newX = e.clientX - containerRect.left - offsetX;
+        let newY = e.clientY - containerRect.top - offsetY;
 
-          // 限制裁剪框在图片范围内
-          newX = Math.max(cropSize / 2, Math.min(img.width - cropSize / 2, newX));
-          newY = Math.max(cropSize / 2, Math.min(img.height - cropSize / 2, newY));
+        newX = Math.max(0, Math.min(img.width - cropWidth, newX));
+        newY = Math.max(0, Math.min(img.height - cropHeight, newY));
 
-          cropX = newX;
-          cropY = newY;
-          updateOverlayPosition();
-        } else if (isResizing) {
-          const currentDistance = getPointerDistance(e);
-          const delta = currentDistance - initialDistance;
-          let newSize = initialSize + delta;
-          newSize = Math.max(50, newSize); // 设置最小裁剪框大小
-          newSize = Math.min(img.width, img.height, newSize); // 最大裁剪框大小
-          cropSize = newSize;
-
-          // 确保裁剪框在图片范围内
-          cropX = Math.max(cropSize / 2, Math.min(img.width - cropSize / 2, cropX));
-          cropY = Math.max(cropSize / 2, Math.min(img.height - cropSize / 2, cropY));
-
-          updateOverlayPosition();
-        }
+        cropX = newX;
+        cropY = newY;
+        updateOverlayPosition();
       }
 
       function stopDrag() {
         isDragging = false;
-        isResizing = false;
         document.removeEventListener('mousemove', onDrag, false);
         document.removeEventListener('mouseup', stopDrag, false);
-        document.removeEventListener('touchmove', onDrag, false);
-        document.removeEventListener('touchend', stopDrag, false);
       }
+    }
 
-      function getPointerDistance(e) {
-        if (e.touches && e.touches.length >= 2) {
-          const dx = e.touches[0].clientX - e.touches[1].clientX;
-          const dy = e.touches[0].clientY - e.touches[1].clientY;
-          return Math.sqrt(dx * dx + dy * dy);
-        } else {
-          return 0;
-        }
-      }
+    // 清除所有预览
+    function clearAllPreviews() {
+      resizedPreview.style.display = 'none';
+      rotatedPreview.style.display = 'none';
+      compressedPreview.style.display = 'none';
+      croppedPreview.style.display = 'none';
+    }
 
-      // 添加缩放手势支持（双指缩放）
-      container.addEventListener('touchmove', function(e) {
-        if (e.touches.length === 2 && cropSelect.value === 'circle') {
-          e.preventDefault();
-          const currentDistance = getPointerDistance(e);
-          if (initialDistance === 0) {
-            initialDistance = currentDistance;
-            initialSize = cropSize;
-          } else {
-            const delta = currentDistance - initialDistance;
-            let newSize = initialSize + delta;
-            newSize = Math.max(50, newSize); // 最小尺寸
-            newSize = Math.min(img.width, img.height, newSize); // 最大尺寸
-            cropSize = newSize;
+    // 下载功能
+    downloadResized.addEventListener('click', () => downloadImage(resizedImage.src, 'resized.png'));
+    downloadRotated.addEventListener('click', () => downloadImage(rotatedImage.src, 'rotated.png'));
+    downloadCompressed.addEventListener('click', () => downloadImage(compressedImage.src, 'compressed.jpg'));
+    downloadCropped.addEventListener('click', () => downloadImage(croppedImage.src, 'cropped.png'));
 
-            // 确保裁剪框在图片范围内
-            cropX = Math.max(cropSize / 2, Math.min(img.width - cropSize / 2, cropX));
-            cropY = Math.max(cropSize / 2, Math.min(img.height - cropSize / 2, cropY));
-
-            updateOverlayPosition();
-          }
-        }
-      }, { passive: false });
-
-      container.addEventListener('touchend', function(e) {
-        if (e.touches.length < 2) {
-          initialDistance = 0;
-        }
-      }, false);
+    function downloadImage(dataUrl, filename) {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      a.click();
     }
   </script>
 </body>
