@@ -508,8 +508,26 @@
           // 重置旋转角度
           currentRotation = 0;
 
+          // 重置圆角输入
+          cornerRadiusInput.value = 30;
+
+          // 重置圆形裁剪输入
+          circleRadiusInput.value = 150;
+          circleRadiusPercentage.textContent = '150px';
+
           // 清除所有预览
           clearAllPreviews();
+
+          // 重置Canvas
+          canvas.width = originalImage.width;
+          canvas.height = originalImage.height;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // 如果切换到圆形裁剪模块，初始化Canvas
+          const activeModule = document.querySelector('.module.active').id;
+          if (activeModule === 'circularCropModule') {
+            initializeCropCanvas();
+          }
         }
       }
       reader.readAsDataURL(file);
@@ -747,7 +765,7 @@
       const tempImage = new Image();
       tempImage.src = originalImageData;
       tempImage.onload = function() {
-        // 设置Canvas尺寸为图片尺寸，限制为最大宽度以适应容器
+        // 设置Canvas尺寸为图片尺寸，限制为最大宽度以应对容器
         const maxCanvasWidth = 700; // 根据容器调整
         let scale = 1;
         if (tempImage.width > maxCanvasWidth) {
