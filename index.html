@@ -14,7 +14,7 @@
 
     body {
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      background-color: #f5f7fa;
+      background: linear-gradient(135deg, #ece9e6, #ffffff);
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -26,60 +26,66 @@
       margin-bottom: 20px;
       text-align: center;
       color: #333;
-      font-size: 2em;
+      font-size: 2.5em;
       font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
 
     .container {
       background-color: #ffffff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      padding: 25px 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       width: 100%;
-      max-width: 500px; /* 适配手机端 */
+      max-width: 550px; /* 适配手机端及更大屏幕 */
+      animation: fadeIn 0.5s ease-in-out;
     }
 
+    /* 渐变按钮样式 */
     .menu {
       display: flex;
       justify-content: space-around;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
       flex-wrap: wrap;
+      gap: 10px;
     }
 
     .menu button {
-      padding: 10px 16px;
+      padding: 12px 20px;
       margin: 5px;
       border: none;
-      border-radius: 8px;
-      background-color: #4CAF50;
+      border-radius: 25px;
+      background: linear-gradient(45deg, #ff7e5f, #feb47b);
       color: white;
       cursor: pointer;
-      transition: background-color 0.3s, transform 0.2s;
-      font-size: 0.9em;
-      flex: 1 1 45%;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      font-size: 1em;
+      flex: 1 1 40%;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
     .menu button:hover {
-      background-color: #45a049;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: linear-gradient(45deg, #feb47b, #ff7e5f);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
     .menu button.active {
-      background-color: #388E3C;
+      background: linear-gradient(45deg, #6a11cb, #2575fc);
     }
 
     .module {
       display: none;
-      padding: 15px;
+      padding: 20px;
       border: 1px solid #e0e0e0;
-      border-radius: 8px;
+      border-radius: 12px;
       background-color: #fafafa;
       transition: all 0.3s;
+      animation: slideIn 0.3s ease-in-out;
     }
 
     .module.active {
@@ -89,14 +95,14 @@
     .input-group {
       display: flex;
       flex-direction: column;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
 
     label {
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       color: #555;
       font-weight: 600;
-      font-size: 0.95em;
+      font-size: 1em;
     }
 
     input[type="file"],
@@ -104,10 +110,10 @@
     select,
     input[type="range"],
     button {
-      padding: 10px;
+      padding: 12px 14px;
       border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 0.9em;
+      border-radius: 8px;
+      font-size: 1em;
       outline: none;
       transition: border-color 0.3s, box-shadow 0.3s;
       width: 100%;
@@ -117,96 +123,104 @@
     input[type="number"]:focus,
     select:focus,
     input[type="range"]:focus {
-      border-color: #4CAF50;
-      box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+      border-color: #6a11cb;
+      box-shadow: 0 0 8px rgba(106, 17, 203, 0.3);
     }
 
+    /* 执行和复原按钮样式 */
     button.execute-btn {
-      background-color: #4CAF50;
+      background: linear-gradient(45deg, #43cea2, #185a9d);
       color: white;
       cursor: pointer;
       border: none;
       width: 48%;
       align-self: flex-start;
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 6px;
+      margin-top: 15px;
+      padding: 12px 0;
+      border-radius: 25px;
       font-weight: bold;
-      transition: background-color 0.3s, transform 0.2s;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
     button.execute-btn:hover {
-      background-color: #45a049;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: linear-gradient(45deg, #185a9d, #43cea2);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
-    /* 新增的复原按钮样式 */
     button.restore-btn {
-      background-color: #f44336;
+      background: linear-gradient(45deg, #ff4b1f, #ff9068);
       color: white;
       cursor: pointer;
       border: none;
       width: 48%;
       align-self: flex-end;
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 6px;
+      margin-top: 15px;
+      padding: 12px 0;
+      border-radius: 25px;
       font-weight: bold;
-      transition: background-color 0.3s, transform 0.2s;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
     button.restore-btn:hover {
-      background-color: #d32f2f;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: linear-gradient(45deg, #ff9068, #ff4b1f);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
     .download-btn {
-      background-color: #2196F3;
+      background: linear-gradient(45deg, #f7971e, #ffd200);
       color: white;
       cursor: pointer;
       border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      margin-top: 10px;
-      transition: background-color 0.3s, transform 0.2s;
+      padding: 12px 0;
+      border-radius: 25px;
+      margin-top: 15px;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
       font-weight: bold;
       width: 100%;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
     .download-btn:hover {
-      background-color: #0b7dda;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: linear-gradient(45deg, #ffd200, #f7971e);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
     }
 
     .preview {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 15px;
+      margin-top: 20px;
     }
 
     .preview img {
       max-width: 100%;
       height: auto;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      margin-bottom: 8px;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+      margin-bottom: 10px;
+      transition: transform 0.3s;
+    }
+
+    .preview img:hover {
+      transform: scale(1.02);
     }
 
     .preview-details {
       text-align: center;
       color: #666;
-      font-size: 0.9em;
+      font-size: 0.95em;
     }
 
     /* 压缩质量滑块样式 */
     .slider-container {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .slider-container input[type="range"] {
@@ -214,14 +228,25 @@
     }
 
     .slider-percentage {
-      width: 40px;
+      width: 50px;
       text-align: center;
       font-weight: bold;
       color: #333;
     }
 
+    /* 动画效果 */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; max-height: 0; }
+      to { opacity: 1; max-height: 1000px; }
+    }
+
+    /* 响应式设计 */
     @media (min-width: 501px) {
-      /* 隐藏该网页在非手机端的样式 */
       body {
         justify-content: center;
       }
@@ -231,7 +256,7 @@
       }
 
       .menu button {
-        flex: 1 1 30%;
+        flex: 1 1 22%;
         font-size: 1em;
       }
     }
