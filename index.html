@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>苏苏图片编辑器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>苏苏图片编辑器 - 圆形裁剪优化版</title>
   <style>
     /* 重置和基础样式 */
     * {
@@ -243,6 +243,8 @@
       height: auto;
       margin-top: 15px;
       position: relative;
+      display: block;
+      background-color: #000; /* 防止在加载图像前闪烁 */
     }
 
     /* 动画效果 */
@@ -300,7 +302,75 @@
     </div>
 
     <!-- 调整大小模块 -->
-    <!-- 省略其他模块内容以节省空间 -->
+    <div class="module" id="resizeModule">
+      <h2>调整大小</h2>
+      <div class="input-group">
+        <label for="resizeWidth">宽度 (px)</label>
+        <input type="number" id="resizeWidth" min="1">
+      </div>
+      <div class="input-group">
+        <label for="resizeHeight">高度 (px)</label>
+        <input type="number" id="resizeHeight" min="1">
+      </div>
+      <button class="execute-btn" id="resizeButton">执行调整</button>
+      <button class="restore-btn" id="restoreResizeButton">复原</button>
+      <div class="preview" id="resizePreview" style="display: none;">
+        <img id="resizedImage" src="#" alt="调整大小后的图片">
+        <div class="preview-details">调整大小后的图片预览</div>
+        <button class="download-btn" id="downloadResized">下载调整大小后的图片</button>
+      </div>
+    </div>
+
+    <!-- 旋转模块 -->
+    <div class="module" id="rotateModule">
+      <h2>旋转图片</h2>
+      <div class="input-group">
+        <label for="rotateAngle">旋转角度 (°)</label>
+        <input type="number" id="rotateAngle" value="0">
+      </div>
+      <button class="execute-btn" id="rotateButton">执行旋转</button>
+      <button class="restore-btn" id="restoreRotateButton">复原</button>
+      <div class="preview" id="rotatePreview" style="display: none;">
+        <img id="rotatedImage" src="#" alt="旋转后的图片">
+        <div class="preview-details">旋转后的图片预览</div>
+        <button class="download-btn" id="downloadRotated">下载旋转后的图片</button>
+      </div>
+    </div>
+
+    <!-- 压缩质量模块 -->
+    <div class="module" id="compressionModule">
+      <h2>压缩质量</h2>
+      <div class="input-group">
+        <label for="compressionQuality">压缩质量 (%)</label>
+        <div class="slider-container">
+          <input type="range" id="compressionQuality" min="10" max="100" value="80">
+          <span class="slider-percentage" id="compressionQualityPercentage">80%</span>
+        </div>
+      </div>
+      <button class="execute-btn" id="compressionButton">执行压缩</button>
+      <button class="restore-btn" id="restoreCompressionButton">复原</button>
+      <div class="preview" id="compressionPreview" style="display: none;">
+        <img id="compressedImage" src="#" alt="压缩后的图片">
+        <div class="preview-details">压缩后的图片预览</div>
+        <button class="download-btn" id="downloadCompressed">下载压缩后的图片</button>
+      </div>
+    </div>
+
+    <!-- 圆角矩形模块 -->
+    <div class="module" id="roundedModule">
+      <h2>圆角矩形</h2>
+      <div class="input-group">
+        <label for="cornerRadius">圆角半径 (px)</label>
+        <input type="number" id="cornerRadius" min="0" value="20">
+      </div>
+      <button class="execute-btn" id="roundedButton">应用圆角</button>
+      <button class="restore-btn" id="restoreRoundedButton">复原</button>
+      <div class="preview" id="roundedPreview" style="display: none;">
+        <img id="roundedImage" src="#" alt="圆角矩形后的图片">
+        <div class="preview-details">圆角矩形后的图片预览</div>
+        <button class="download-btn" id="downloadRounded">下载圆角矩形后的图片</button>
+      </div>
+    </div>
 
     <!-- 新增圆形裁剪模块 -->
     <div class="module" id="circularCropModule">
@@ -355,10 +425,38 @@
     const imageUpload = document.getElementById('imageUpload');
 
     // 调整大小模块元素
-    // 省略调整大小模块的相关变量
+    const resizeWidthInput = document.getElementById('resizeWidth');
+    const resizeHeightInput = document.getElementById('resizeHeight');
+    const resizeButton = document.getElementById('resizeButton');
+    const restoreResizeButton = document.getElementById('restoreResizeButton');
+    const resizedImage = document.getElementById('resizedImage');
+    const resizePreview = document.getElementById('resizePreview');
+    const downloadResized = document.getElementById('downloadResized');
+
+    // 旋转模块元素
+    const rotateAngleInput = document.getElementById('rotateAngle');
+    const rotateButton = document.getElementById('rotateButton');
+    const restoreRotateButton = document.getElementById('restoreRotateButton');
+    const rotatedImage = document.getElementById('rotatedImage');
+    const rotatePreview = document.getElementById('rotatePreview');
+    const downloadRotated = document.getElementById('downloadRotated');
+
+    // 压缩质量模块元素
+    const compressionQualityInput = document.getElementById('compressionQuality');
+    const compressionQualityPercentage = document.getElementById('compressionQualityPercentage');
+    const compressionButton = document.getElementById('compressionButton');
+    const restoreCompressionButton = document.getElementById('restoreCompressionButton');
+    const compressedImage = document.getElementById('compressedImage');
+    const compressionPreview = document.getElementById('compressionPreview');
+    const downloadCompressed = document.getElementById('downloadCompressed');
 
     // 圆角矩形模块元素
-    // 省略圆角矩形模块的相关变量
+    const cornerRadiusInput = document.getElementById('cornerRadius');
+    const roundedButton = document.getElementById('roundedButton');
+    const restoreRoundedButton = document.getElementById('restoreRoundedButton');
+    const roundedImage = document.getElementById('roundedImage');
+    const roundedPreview = document.getElementById('roundedPreview');
+    const downloadRounded = document.getElementById('downloadRounded');
 
     // 圆形裁剪模块元素
     const circleRadiusInput = document.getElementById('circleRadius');
@@ -415,20 +513,23 @@
           preloadedImage.src = originalImageData;
           preloadedImage.onload = () => {
             // 初始化功能模块的输入值
+
             // 调整大小
-            // 省略调整大小模块的初始化
+            resizeWidthInput.value = originalImage.width;
+            resizeHeightInput.value = originalImage.height;
 
             // 压缩质量
-            // 省略压缩质量模块的初始化
+            compressionQualityInput.value = 80;
+            compressionQualityPercentage.textContent = '80%';
 
-            // 重置旋转角度
-            // 省略旋转模块的初始化
+            // 旋转角度
+            rotateAngleInput.value = 0;
 
-            // 重置圆角输入，根据图片大小自动设置
+            // 圆角输入，根据图片大小自动设置
             const defaultRadius = calculateRadius(originalImage.width);
             cornerRadiusInput.value = defaultRadius;
 
-            // 重置圆形裁剪输入
+            // 圆形裁剪输入
             circleRadiusInput.value = 150;
             circleRadiusPercentage.textContent = '150px';
 
@@ -451,7 +552,227 @@
       reader.readAsDataURL(file);
     });
 
-    // 调整大小、旋转、压缩、圆角矩形功能代码省略...
+    // 调整大小功能
+    resizeButton.addEventListener('click', () => {
+      if (!originalImageData) {
+        alert('请先上传一张图片。');
+        return;
+      }
+
+      const newWidth = parseInt(resizeWidthInput.value);
+      const newHeight = parseInt(resizeHeightInput.value);
+
+      if (isNaN(newWidth) || isNaN(newHeight) || newWidth <= 0 || newHeight <= 0) {
+        alert('请输入有效的宽度和高度。');
+        return;
+      }
+
+      // 创建一个新的Canvas用于调整大小
+      const resizeCanvas = document.createElement('canvas');
+      resizeCanvas.width = newWidth;
+      resizeCanvas.height = newHeight;
+      const resizeCtx = resizeCanvas.getContext('2d');
+
+      // 绘制调整大小后的图像
+      resizeCtx.drawImage(preloadedImage, 0, 0, newWidth, newHeight);
+
+      // 获取调整大小后的图片URL
+      const resizedDataURL = resizeCanvas.toDataURL('image/png');
+      resizedImage.src = resizedDataURL;
+      resizePreview.style.display = 'flex';
+    });
+
+    // 复原调整大小
+    restoreResizeButton.addEventListener('click', () => {
+      if (!originalImageData) return;
+
+      resizeWidthInput.value = originalImageWidth;
+      resizeHeightInput.value = originalImageHeight;
+      resizedImage.src = '';
+      resizePreview.style.display = 'none';
+    });
+
+    // 下载调整大小后的图片
+    downloadResized.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = resizedImage.src;
+      link.download = 'resized-image.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // 旋转功能
+    rotateButton.addEventListener('click', () => {
+      if (!originalImageData) {
+        alert('请先上传一张图片。');
+        return;
+      }
+
+      const angle = parseFloat(rotateAngleInput.value);
+      if (isNaN(angle)) {
+        alert('请输入有效的旋转角度。');
+        return;
+      }
+
+      // 将角度转换为弧度
+      const radians = angle * Math.PI / 180;
+
+      // 计算旋转后的Canvas大小
+      const rotatedWidth = Math.abs(originalImage.width * Math.cos(radians)) + Math.abs(originalImage.height * Math.sin(radians));
+      const rotatedHeight = Math.abs(originalImage.width * Math.sin(radians)) + Math.abs(originalImage.height * Math.cos(radians));
+
+      // 创建一个新的Canvas用于旋转
+      const rotateCanvas = document.createElement('canvas');
+      rotateCanvas.width = rotatedWidth;
+      rotateCanvas.height = rotatedHeight;
+      const rotateCtx = rotateCanvas.getContext('2d');
+
+      // 将Canvas中心移动到旋转中心
+      rotateCtx.translate(rotatedWidth / 2, rotatedHeight / 2);
+      rotateCtx.rotate(radians);
+      rotateCtx.drawImage(preloadedImage, -originalImage.width / 2, -originalImage.height / 2);
+
+      // 获取旋转后的图片URL
+      const rotatedDataURL = rotateCanvas.toDataURL('image/png');
+      rotatedImage.src = rotatedDataURL;
+      rotatePreview.style.display = 'flex';
+    });
+
+    // 复原旋转
+    restoreRotateButton.addEventListener('click', () => {
+      if (!originalImageData) return;
+
+      rotateAngleInput.value = 0;
+      rotatedImage.src = '';
+      rotatePreview.style.display = 'none';
+    });
+
+    // 下载旋转后的图片
+    downloadRotated.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = rotatedImage.src;
+      link.download = 'rotated-image.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // 压缩质量功能
+    compressionQualityInput.addEventListener('input', () => {
+      const quality = compressionQualityInput.value;
+      compressionQualityPercentage.textContent = `${quality}%`;
+    });
+
+    compressionButton.addEventListener('click', () => {
+      if (!originalImageData) {
+        alert('请先上传一张图片。');
+        return;
+      }
+
+      const quality = parseInt(compressionQualityInput.value) / 100;
+      if (isNaN(quality) || quality <= 0 || quality > 1) {
+        alert('请选择有效的压缩质量。');
+        return;
+      }
+
+      // 创建一个新的Canvas用于压缩
+      const compressionCanvas = document.createElement('canvas');
+      compressionCanvas.width = originalImage.width;
+      compressionCanvas.height = originalImage.height;
+      const compressionCtx = compressionCanvas.getContext('2d');
+
+      // 绘制图像
+      compressionCtx.drawImage(preloadedImage, 0, 0, compressionCanvas.width, compressionCanvas.height);
+
+      // 获取压缩后的图片URL
+      const compressedDataURL = compressionCanvas.toDataURL('image/jpeg', quality);
+      compressedImage.src = compressedDataURL;
+      compressionPreview.style.display = 'flex';
+    });
+
+    // 复原压缩质量
+    restoreCompressionButton.addEventListener('click', () => {
+      if (!originalImageData) return;
+
+      compressionQualityInput.value = 80;
+      compressionQualityPercentage.textContent = '80%';
+      compressedImage.src = '';
+      compressionPreview.style.display = 'none';
+    });
+
+    // 下载压缩后的图片
+    downloadCompressed.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = compressedImage.src;
+      link.download = 'compressed-image.jpg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // 圆角矩形功能
+    roundedButton.addEventListener('click', () => {
+      if (!originalImageData) {
+        alert('请先上传一张图片。');
+        return;
+      }
+
+      const radius = parseInt(cornerRadiusInput.value);
+      if (isNaN(radius) || radius < 0) {
+        alert('请输入有效的圆角半径。');
+        return;
+      }
+
+      // 创建一个新的Canvas用于圆角矩形
+      const roundedCanvas = document.createElement('canvas');
+      roundedCanvas.width = originalImage.width;
+      roundedCanvas.height = originalImage.height;
+      const roundedCtx = roundedCanvas.getContext('2d');
+
+      // 绘制圆角矩形路径
+      roundedCtx.beginPath();
+      roundedCtx.moveTo(radius, 0);
+      roundedCtx.lineTo(roundedCanvas.width - radius, 0);
+      roundedCtx.quadraticCurveTo(roundedCanvas.width, 0, roundedCanvas.width, radius);
+      roundedCtx.lineTo(roundedCanvas.width, roundedCanvas.height - radius);
+      roundedCtx.quadraticCurveTo(roundedCanvas.width, roundedCanvas.height, roundedCanvas.width - radius, roundedCanvas.height);
+      roundedCtx.lineTo(radius, roundedCanvas.height);
+      roundedCtx.quadraticCurveTo(0, roundedCanvas.height, 0, roundedCanvas.height - radius);
+      roundedCtx.lineTo(0, radius);
+      roundedCtx.quadraticCurveTo(0, 0, radius, 0);
+      roundedCtx.closePath();
+
+      // 裁剪为圆角矩形
+      roundedCtx.clip();
+
+      // 绘制图像
+      roundedCtx.drawImage(preloadedImage, 0, 0, roundedCanvas.width, roundedCanvas.height);
+
+      // 获取圆角矩形后的图片URL
+      const roundedDataURL = roundedCanvas.toDataURL('image/png');
+      roundedImage.src = roundedDataURL;
+      roundedPreview.style.display = 'flex';
+    });
+
+    // 复原圆角矩形
+    restoreRoundedButton.addEventListener('click', () => {
+      if (!originalImageData) return;
+
+      cornerRadiusInput.value = calculateRadius(originalImage.width);
+      roundedImage.src = '';
+      roundedPreview.style.display = 'none';
+    });
+
+    // 下载圆角矩形后的图片
+    downloadRounded.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = roundedImage.src;
+      link.download = 'rounded-image.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
 
     // 圆形裁剪功能
 
@@ -518,12 +839,12 @@
       });
     }
 
-    // 处理鼠标和触摸事件以拖动裁剪圆
+    // 获取指针位置（鼠标或触摸）
     function getPointerPosition(e) {
       const rect = cropCanvas.getBoundingClientRect();
       let clientX, clientY;
 
-      if (e.touches) {
+      if (e.touches && e.touches.length > 0) {
         clientX = e.touches[0].clientX;
         clientY = e.touches[0].clientY;
       } else {
@@ -537,9 +858,10 @@
       };
     }
 
+    // 监听拖动事件
     cropCanvas.addEventListener('mousedown', (e) => {
       const pos = getPointerPosition(e);
-      const distance = Math.sqrt((pos.x - cropCircle.x) ** 2 + (pos.y - cropCircle.y) ** 2);
+      const distance = Math.hypot(pos.x - cropCircle.x, pos.y - cropCircle.y);
       if (distance <= cropCircle.radius) {
         cropCircle.isDragging = true;
         cropCircle.offsetX = cropCircle.x - pos.x;
@@ -550,7 +872,7 @@
     cropCanvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
       const pos = getPointerPosition(e);
-      const distance = Math.sqrt((pos.x - cropCircle.x) ** 2 + (pos.y - cropCircle.y) ** 2);
+      const distance = Math.hypot(pos.x - cropCircle.x, pos.y - cropCircle.y);
       if (distance <= cropCircle.radius) {
         cropCircle.isDragging = true;
         cropCircle.offsetX = cropCircle.x - pos.x;
@@ -589,6 +911,7 @@
       }
     }, { passive: false });
 
+    // 监听拖动结束事件
     window.addEventListener('mouseup', () => {
       if (cropCircle.isDragging) {
         cropCircle.isDragging = false;
@@ -683,7 +1006,20 @@
     // 辅助函数：清除所有预览
     function clearAllPreviews() {
       // 调整大小预览
-      // 省略其他预览清理代码
+      resizedImage.src = '';
+      resizePreview.style.display = 'none';
+
+      // 旋转预览
+      rotatedImage.src = '';
+      rotatePreview.style.display = 'none';
+
+      // 压缩质量预览
+      compressedImage.src = '';
+      compressionPreview.style.display = 'none';
+
+      // 圆角矩形预览
+      roundedImage.src = '';
+      roundedPreview.style.display = 'none';
 
       // 圆形裁剪预览
       circularCroppedImage.src = '';
