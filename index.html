@@ -37,7 +37,7 @@
       border-radius: 16px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       width: 100%;
-      max-width: 550px; /* 适配手机端及更大屏幕 */
+      max-width: 800px; /* 增加宽度以适应Canvas */
       animation: fadeIn 0.5s ease-in-out;
     }
 
@@ -60,7 +60,7 @@
       cursor: pointer;
       transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
       font-size: 1em;
-      flex: 1 1 40%;
+      flex: 1 1 30%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -234,6 +234,17 @@
       color: #333;
     }
 
+    /* Canvas样式 */
+    #cropCanvas {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      cursor: crosshair;
+      max-width: 100%;
+      height: auto;
+      margin-top: 15px;
+      position: relative;
+    }
+
     /* 动画效果 */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
@@ -366,10 +377,11 @@
       <div class="input-group">
         <label for="circleRadius">圆形半径 (px)</label>
         <div class="slider-container">
-          <input type="range" id="circleRadius" min="50" max="500" value="150">
+          <input type="range" id="circleRadius" min="50" max="250" value="150">
           <span class="slider-percentage" id="circleRadiusPercentage">150px</span>
         </div>
       </div>
+      <canvas id="cropCanvas"></canvas>
       <div style="display: flex; justify-content: space-between;">
         <button class="execute-btn" id="circularCropButton">执行裁剪</button>
         <button class="restore-btn" id="restoreCircularCropButton">复原</button>
@@ -394,6 +406,8 @@
 
     // 当前原始图片数据
     let originalImageData = null;
+    let originalImageWidth = 0;
+    let originalImageHeight = 0;
 
     // 获取原始图片元素
     const originalImage = document.getElementById('originalImage');
@@ -445,6 +459,8 @@
     const circularCroppedImage = document.getElementById('circularCroppedImage');
     const circularCropPreview = document.getElementById('circularCropPreview');
     const downloadCircularCropped = document.getElementById('downloadCircularCropped');
+    const cropCanvas = document.getElementById('cropCanvas');
+    const cropCtx = cropCanvas.getContext('2d');
 
     // 功能菜单点击事件
     menuButtons.forEach(button => {
@@ -458,6 +474,11 @@
         modules.forEach(mod => mod.classList.remove('active'));
         // 显示选中的模块
         document.getElementById(targetModule).classList.add('active');
+
+        // 如果切换到圆形裁剪模块，初始化Canvas
+        if (targetModule === 'circularCropModule' && originalImageData) {
+          initializeCropCanvas();
+        }
       });
     });
 
@@ -472,6 +493,8 @@
         originalImage.onload = function() {
           originalPreview.style.display = 'flex';
           originalImageData = event.target.result;
+          originalImageWidth = originalImage.width;
+          originalImageHeight = originalImage.height;
 
           // 初始化功能模块的输入值
           // 调整大小
@@ -484,10 +507,6 @@
 
           // 重置旋转角度
           currentRotation = 0;
-
-          // 重置圆形裁剪半径
-          circleRadiusInput.value = Math.min(originalImage.width, originalImage.height) / 4;
-          circleRadiusPercentage.textContent = `${circleRadiusInput.value}px`;
 
           // 清除所有预览
           clearAllPreviews();
@@ -713,57 +732,166 @@
     });
 
     // 圆形裁剪功能
-    circleRadiusInput.addEventListener('input', () => {
-      circleRadiusPercentage.textContent = `${circleRadiusInput.value}px`;
+
+    let cropCircle = {
+      x: 0,
+      y: 0,
+      radius: 150,
+      isDragging: false,
+      offsetX: 0,
+      offsetY: 0
+    };
+
+    // 初始化裁剪Canvas
+    function initializeCropCanvas() {
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        // 设置Canvas尺寸为图片尺寸，限制为最大宽度以适应容器
+        const maxCanvasWidth = 700; // 根据容器调整
+        let scale = 1;
+        if (tempImage.width > maxCanvasWidth) {
+          scale = maxCanvasWidth / tempImage.width;
+        }
+        cropCanvas.width = tempImage.width * scale;
+        cropCanvas.height = tempImage.height * scale;
+
+        // 清空Canvas
+        cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+        // 绘制缩放后的图片
+        cropCtx.drawImage(tempImage, 0, 0, cropCanvas.width, cropCanvas.height);
+
+        // 设置裁剪圆的初始位置和半径
+        cropCircle.radius = Math.min(cropCanvas.width, cropCanvas.height) / 4; // 初始半径为四分之一
+        circleRadiusInput.value = cropCircle.radius;
+        circleRadiusPercentage.textContent = `${cropCircle.radius}px`;
+        cropCircle.x = cropCanvas.width / 2;
+        cropCircle.y = cropCanvas.height / 2;
+
+        drawCropCircle();
+      }
+    }
+
+    // 绘制裁剪圆
+    function drawCropCircle() {
+      // 重新绘制图片
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        // 清空Canvas
+        cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+        // 绘制图片
+        cropCtx.drawImage(tempImage, 0, 0, cropCanvas.width, cropCanvas.height);
+
+        // 绘制半透明覆盖层
+        cropCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        cropCtx.beginPath();
+        cropCtx.rect(0, 0, cropCanvas.width, cropCanvas.height);
+        cropCtx.arc(cropCircle.x, cropCircle.y, cropCircle.radius, 0, Math.PI * 2, true);
+        cropCtx.fill('evenodd');
+
+        // 绘制圆形边框
+        cropCtx.strokeStyle = '#fff';
+        cropCtx.lineWidth = 2;
+        cropCtx.beginPath();
+        cropCtx.arc(cropCircle.x, cropCircle.y, cropCircle.radius, 0, Math.PI * 2, true);
+        cropCtx.stroke();
+      }
+    }
+
+    // 处理鼠标事件以拖动裁剪圆
+    cropCanvas.addEventListener('mousedown', (e) => {
+      const rect = cropCanvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const distance = Math.sqrt((mouseX - cropCircle.x) ** 2 + (mouseY - cropCircle.y) ** 2);
+      if (distance <= cropCircle.radius) {
+        cropCircle.isDragging = true;
+        cropCircle.offsetX = cropCircle.x - mouseX;
+        cropCircle.offsetY = cropCircle.y - mouseY;
+      }
     });
 
+    cropCanvas.addEventListener('mousemove', (e) => {
+      if (cropCircle.isDragging) {
+        const rect = cropCanvas.getBoundingClientRect();
+        let mouseX = e.clientX - rect.left;
+        let mouseY = e.clientY - rect.top;
+
+        // 更新裁剪圆的位置
+        cropCircle.x = mouseX + cropCircle.offsetX;
+        cropCircle.y = mouseY + cropCircle.offsetY;
+
+        // 限制裁剪圆不超出图片边界
+        cropCircle.x = Math.max(cropCircle.radius, Math.min(cropCanvas.width - cropCircle.radius, cropCircle.x));
+        cropCircle.y = Math.max(cropCircle.radius, Math.min(cropCanvas.height - cropCircle.radius, cropCircle.y));
+
+        drawCropCircle();
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (cropCircle.isDragging) {
+        cropCircle.isDragging = false;
+      }
+    });
+
+    // 圆形半径滑块事件
+    circleRadiusInput.addEventListener('input', () => {
+      let newRadius = parseInt(circleRadiusInput.value);
+      if (isNaN(newRadius) || newRadius <= 0) {
+        return;
+      }
+
+      // 根据图片尺寸动态设置最大半径
+      const maxRadius = Math.min(cropCanvas.width, cropCanvas.height) / 2;
+      if (newRadius > maxRadius) {
+        newRadius = maxRadius;
+        circleRadiusInput.value = newRadius;
+      }
+      cropCircle.radius = newRadius;
+      circleRadiusPercentage.textContent = `${newRadius}px`;
+
+      // 确保裁剪圆在图片内
+      cropCircle.x = Math.max(cropCircle.radius, Math.min(cropCanvas.width - cropCircle.radius, cropCircle.x));
+      cropCircle.y = Math.max(cropCircle.radius, Math.min(cropCanvas.height - cropCircle.radius, cropCircle.y));
+
+      drawCropCircle();
+    });
+
+    // 执行裁剪
     circularCropButton.addEventListener('click', () => {
       if (!originalImageData) {
         alert('请先上传一张图片。');
         return;
       }
 
-      let radius = parseInt(circleRadiusInput.value);
-      if (isNaN(radius) || radius <= 0) {
-        alert('请输入有效的圆形半径。');
-        return;
-      }
+      // 创建一个新的Canvas用于裁剪
+      const outputCanvas = document.createElement('canvas');
+      outputCanvas.width = cropCircle.radius * 2;
+      outputCanvas.height = cropCircle.radius * 2;
+      const outputCtx = outputCanvas.getContext('2d');
+
+      // 绘制圆形裁剪区域
+      outputCtx.beginPath();
+      outputCtx.arc(cropCircle.radius, cropCircle.radius, cropCircle.radius, 0, Math.PI * 2, true);
+      outputCtx.closePath();
+      outputCtx.clip();
+
+      // 计算原始图片上的裁剪区域
+      const scaleX = originalImageWidth / cropCanvas.width;
+      const scaleY = originalImageHeight / cropCanvas.height;
+
+      const sourceX = (cropCircle.x - cropCircle.radius) * scaleX;
+      const sourceY = (cropCircle.y - cropCircle.radius) * scaleY;
+      const sourceWidth = cropCircle.radius * 2 * scaleX;
+      const sourceHeight = cropCircle.radius * 2 * scaleY;
 
       const tempImage = new Image();
       tempImage.src = originalImageData;
       tempImage.onload = function() {
-        // 设置Canvas尺寸为图片尺寸
-        canvas.width = tempImage.width;
-        canvas.height = tempImage.height;
-
-        // 清空画布
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 计算圆心位置（居中）
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-
-        // 创建圆形裁剪路径
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, true);
-        ctx.closePath();
-        ctx.clip();
-
-        // 绘制图片
-        ctx.drawImage(tempImage, 0, 0);
-
-        // 替换为透明背景
-        // 创建一个新的Canvas用于处理透明背景
-        const outputCanvas = document.createElement('canvas');
-        outputCanvas.width = canvas.width;
-        outputCanvas.height = canvas.height;
-        const outputCtx = outputCanvas.getContext('2d');
-
-        // 清空并保持透明
-        outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-
-        // 将裁剪后的图片绘制到新Canvas
-        outputCtx.drawImage(canvas, 0, 0);
+        outputCtx.drawImage(tempImage, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, outputCanvas.width, outputCanvas.height);
 
         // 获取裁剪后的图片URL
         const circularCroppedDataURL = outputCanvas.toDataURL('image/png');
@@ -776,10 +904,7 @@
     restoreCircularCropButton.addEventListener('click', () => {
       if (!originalImageData) return;
 
-      // 重置半径滑块
-      circleRadiusInput.value = Math.min(originalImage.width, originalImage.height) / 4;
-      circleRadiusPercentage.textContent = `${circleRadiusInput.value}px`;
-
+      initializeCropCanvas();
       circularCroppedImage.src = '';
       circularCropPreview.style.display = 'none';
     });
@@ -838,6 +963,9 @@
       // 圆形裁剪预览
       circularCroppedImage.src = '';
       circularCropPreview.style.display = 'none';
+
+      // 清空裁剪Canvas
+      cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
     }
   </script>
 </body>
