@@ -352,25 +352,25 @@
       </div>
     </div>
 
- <!-- 圆角矩形模块 -->
-<div class="module" id="roundedModule">
-  <h2>圆角矩形</h2>
-  <div class="input-group">
-    <label for="cornerRadius">圆角半径 (%)</label>
-    <div class="slider-container">
-      <input type="range" id="cornerRadius" min="0" max="50" value="30">
-      <span class="slider-percentage" id="cornerRadiusPercentage">30%</span>
+    <!-- 圆角矩形模块 -->
+    <div class="module" id="roundedModule">
+      <h2>圆角矩形</h2>
+      <div class="input-group">
+        <label for="cornerRadius">圆角半径 (px)</label>
+        <div class="slider-container">
+          <input type="range" id="cornerRadius" min="0" max="100" value="30">
+          <span class="slider-percentage" id="cornerRadiusPercentage">30px</span>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <button class="restore-btn" id="restoreRoundedButton">复原</button>
+      </div>
+      <div class="preview" id="roundedPreview" style="display: none;">
+        <img id="roundedImage" src="#" alt="圆角后的图片">
+        <div class="preview-details">圆角后的图片预览</div>
+        <button class="download-btn" id="downloadRounded">下载圆角后的图片</button>
+      </div>
     </div>
-  </div>
-  <div style="display: flex; justify-content: space-between;">
-    <button class="restore-btn" id="restoreRoundedButton">复原</button>
-  </div>
-  <div class="preview" id="roundedPreview" style="display: none;">
-    <img id="roundedImage" src="#" alt="圆角后的图片" style="border-radius: 30%;">
-    <div class="preview-details">圆角后的图片预览</div>
-    <button class="download-btn" id="downloadRounded">下载圆角后的图片</button>
-  </div>
-</div>
 
     <!-- 新增圆形裁剪模块 -->
     <div class="module" id="circularCropModule">
@@ -1049,3 +1049,4 @@
   </script>
 </body>
 </html>
+圆角矩形的圆角算法改为百分比圆角，只给出修改后的全部代码，不要解释，只给代码
