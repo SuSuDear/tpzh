@@ -799,11 +799,28 @@
       }
     }
 
-    // 处理鼠标事件以拖动裁剪圆
-    cropCanvas.addEventListener('mousedown', (e) => {
+    // 获取触摸或鼠标事件的坐标
+    function getEventPos(e) {
+      if (e.touches && e.touches.length > 0) {
+        return {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
+        };
+      } else {
+        return {
+          x: e.clientX,
+          y: e.clientY
+        };
+      }
+    }
+
+    // 处理开始拖动事件
+    function startDrag(e) {
+      e.preventDefault();
       const rect = cropCanvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+      const pos = getEventPos(e);
+      const mouseX = pos.x - rect.left;
+      const mouseY = pos.y - rect.top;
 
       const distance = Math.sqrt((mouseX - cropCircle.x) ** 2 + (mouseY - cropCircle.y) ** 2);
       if (distance <= cropCircle.radius) {
@@ -811,31 +828,44 @@
         cropCircle.offsetX = cropCircle.x - mouseX;
         cropCircle.offsetY = cropCircle.y - mouseY;
       }
-    });
+    }
 
-    cropCanvas.addEventListener('mousemove', (e) => {
-      if (cropCircle.isDragging) {
-        const rect = cropCanvas.getBoundingClientRect();
-        let mouseX = e.clientX - rect.left;
-        let mouseY = e.clientY - rect.top;
+    // 处理拖动事件
+    function drag(e) {
+      if (!cropCircle.isDragging) return;
+      e.preventDefault();
+      const rect = cropCanvas.getBoundingClientRect();
+      const pos = getEventPos(e);
+      let mouseX = pos.x - rect.left;
+      let mouseY = pos.y - rect.top;
 
-        // 更新裁剪圆的位置
-        cropCircle.x = mouseX + cropCircle.offsetX;
-        cropCircle.y = mouseY + cropCircle.offsetY;
+      // 更新裁剪圆的位置
+      cropCircle.x = mouseX + cropCircle.offsetX;
+      cropCircle.y = mouseY + cropCircle.offsetY;
 
-        // 限制裁剪圆不超出图片边界
-        cropCircle.x = Math.max(cropCircle.radius, Math.min(cropCanvas.width - cropCircle.radius, cropCircle.x));
-        cropCircle.y = Math.max(cropCircle.radius, Math.min(cropCanvas.height - cropCircle.radius, cropCircle.y));
+      // 限制裁剪圆不超出图片边界
+      cropCircle.x = Math.max(cropCircle.radius, Math.min(cropCanvas.width - cropCircle.radius, cropCircle.x));
+      cropCircle.y = Math.max(cropCircle.radius, Math.min(cropCanvas.height - cropCircle.radius, cropCircle.y));
 
-        drawCropCircle();
-      }
-    });
+      drawCropCircle();
+    }
 
-    window.addEventListener('mouseup', () => {
+    // 处理结束拖动事件
+    function endDrag(e) {
       if (cropCircle.isDragging) {
         cropCircle.isDragging = false;
       }
-    });
+    }
+
+    // 绑定鼠标事件
+    cropCanvas.addEventListener('mousedown', startDrag);
+    cropCanvas.addEventListener('mousemove', drag);
+    window.addEventListener('mouseup', endDrag);
+
+    // 绑定触摸事件
+    cropCanvas.addEventListener('touchstart', startDrag, { passive: false });
+    cropCanvas.addEventListener('touchmove', drag, { passive: false });
+    window.addEventListener('touchend', endDrag);
 
     // 圆形半径滑块事件
     circleRadiusInput.addEventListener('input', () => {
