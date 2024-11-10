@@ -2,10 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>苏苏图片编辑器 - 圆形裁剪优化版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>苏苏图片编辑器</title>
   <style>
-    /* 重置和基础样式 */
+    /* Reset和基础样式 */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -234,19 +234,6 @@
       color: #333;
     }
 
-    /* Canvas样式 */
-    #cropCanvas {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      cursor: crosshair;
-      max-width: 100%;
-      height: auto;
-      margin-top: 15px;
-      position: relative;
-      display: block;
-      background-color: #000; /* 防止在加载图像前闪烁 */
-    }
-
     /* 动画效果 */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
@@ -285,8 +272,7 @@
       <button data-module="rotateModule">旋转图片</button>
       <button data-module="compressionModule">压缩质量</button>
       <button data-module="roundedModule">圆角矩形</button>
-      <!-- 新增圆形裁剪按钮 -->
-      <button data-module="circularCropModule">圆形裁剪</button>
+      <button id="redirectButton">GitHub图床链接</button> <!-- 新增按钮 -->
     </div>
 
     <!-- 上传模块 -->
@@ -306,50 +292,48 @@
       <h2>调整大小</h2>
       <div class="input-group">
         <label for="resizeWidth">宽度 (px)</label>
-        <input type="number" id="resizeWidth" min="1">
+        <input type="number" id="resizeWidth" placeholder="例如: 128">
       </div>
       <div class="input-group">
         <label for="resizeHeight">高度 (px)</label>
-        <input type="number" id="resizeHeight" min="1">
+        <input type="number" id="resizeHeight" placeholder="例如: 128">
       </div>
-      <button class="execute-btn" id="resizeButton">执行调整</button>
-      <button class="restore-btn" id="restoreResizeButton">复原</button>
-      <div class="preview" id="resizePreview" style="display: none;">
-        <img id="resizedImage" src="#" alt="调整大小后的图片">
-        <div class="preview-details">调整大小后的图片预览</div>
-        <button class="download-btn" id="downloadResized">下载调整大小后的图片</button>
+      <div style="display: flex; justify-content: space-between;">
+        <button class="execute-btn" id="resizeButton">调整大小</button>
+        <button class="restore-btn" id="restoreResizeButton">复原</button>
+      </div>
+      <div class="preview" id="resizedPreview" style="display: none;">
+        <img id="resizedImage" src="#" alt="调整后的图片">
+        <div class="preview-details">调整后的图片预览</div>
+        <button class="download-btn" id="downloadResized">下载调整后的图片</button>
       </div>
     </div>
 
     <!-- 旋转模块 -->
     <div class="module" id="rotateModule">
       <h2>旋转图片</h2>
-      <div class="input-group">
-        <label for="rotateAngle">旋转角度 (°)</label>
-        <input type="number" id="rotateAngle" value="0">
+      <div style="display: flex; justify-content: space-between;">
+        <button class="execute-btn" id="rotateButton">旋转 90°</button>
+        <button class="restore-btn" id="restoreRotateButton">复原</button>
       </div>
-      <button class="execute-btn" id="rotateButton">执行旋转</button>
-      <button class="restore-btn" id="restoreRotateButton">复原</button>
-      <div class="preview" id="rotatePreview" style="display: none;">
+      <div class="preview" id="rotatedPreview" style="display: none;">
         <img id="rotatedImage" src="#" alt="旋转后的图片">
         <div class="preview-details">旋转后的图片预览</div>
         <button class="download-btn" id="downloadRotated">下载旋转后的图片</button>
       </div>
     </div>
 
-    <!-- 压缩质量模块 -->
+    <!-- 压缩模块 -->
     <div class="module" id="compressionModule">
       <h2>压缩质量</h2>
       <div class="input-group">
-        <label for="compressionQuality">压缩质量 (%)</label>
+        <label for="compressionRange">压缩质量 (%)</label>
         <div class="slider-container">
-          <input type="range" id="compressionQuality" min="10" max="100" value="80">
-          <span class="slider-percentage" id="compressionQualityPercentage">80%</span>
+          <input type="range" id="compressionRange" min="10" max="100" value="80">
+          <span class="slider-percentage" id="compressionPercentage">80%</span>
         </div>
       </div>
-      <button class="execute-btn" id="compressionButton">执行压缩</button>
-      <button class="restore-btn" id="restoreCompressionButton">复原</button>
-      <div class="preview" id="compressionPreview" style="display: none;">
+      <div class="preview" id="compressedPreview" style="display: none;">
         <img id="compressedImage" src="#" alt="压缩后的图片">
         <div class="preview-details">压缩后的图片预览</div>
         <button class="download-btn" id="downloadCompressed">下载压缩后的图片</button>
@@ -361,36 +345,17 @@
       <h2>圆角矩形</h2>
       <div class="input-group">
         <label for="cornerRadius">圆角半径 (px)</label>
-        <input type="number" id="cornerRadius" min="0" value="20">
+        <input type="number" id="cornerRadius" placeholder="默认值: 根据图片大小自动设置" value="">
+        <!-- 默认iOS图标的圆角半径可以根据图标尺寸调整，可以设定一个默认值 -->
       </div>
-      <button class="execute-btn" id="roundedButton">应用圆角</button>
-      <button class="restore-btn" id="restoreRoundedButton">复原</button>
-      <div class="preview" id="roundedPreview" style="display: none;">
-        <img id="roundedImage" src="#" alt="圆角矩形后的图片">
-        <div class="preview-details">圆角矩形后的图片预览</div>
-        <button class="download-btn" id="downloadRounded">下载圆角矩形后的图片</button>
-      </div>
-    </div>
-
-    <!-- 新增圆形裁剪模块 -->
-    <div class="module" id="circularCropModule">
-      <h2>圆形裁剪</h2>
-      <div class="input-group">
-        <label for="circleRadius">圆形半径 (px)</label>
-        <div class="slider-container">
-          <input type="range" id="circleRadius" min="50" max="350" value="150">
-          <span class="slider-percentage" id="circleRadiusPercentage">150px</span>
-        </div>
-      </div>
-      <canvas id="cropCanvas"></canvas>
       <div style="display: flex; justify-content: space-between;">
-        <button class="execute-btn" id="circularCropButton">执行裁剪</button>
-        <button class="restore-btn" id="restoreCircularCropButton">复原</button>
+        <button class="execute-btn" id="roundedButton">应用圆角</button>
+        <button class="restore-btn" id="restoreRoundedButton">复原</button>
       </div>
-      <div class="preview" id="circularCropPreview" style="display: none;">
-        <img id="circularCroppedImage" src="#" alt="圆形裁剪后的图片">
-        <div class="preview-details">圆形裁剪后的图片预览</div>
-        <button class="download-btn" id="downloadCircularCropped">下载圆形裁剪后的图片</button>
+      <div class="preview" id="roundedPreview" style="display: none;">
+        <img id="roundedImage" src="#" alt="圆角后的图片">
+        <div class="preview-details">圆角后的图片预览</div>
+        <button class="download-btn" id="downloadRounded">下载圆角后的图片</button>
       </div>
     </div>
   </div>
@@ -399,9 +364,6 @@
   <canvas id="canvas" style="display: none;"></canvas>
 
   <script>
-    // 全局变量
-    let preloadedImage = null; // 预加载的图像对象
-
     // 获取所有功能按钮
     const menuButtons = document.querySelectorAll('.menu button');
 
@@ -425,29 +387,26 @@
     const imageUpload = document.getElementById('imageUpload');
 
     // 调整大小模块元素
-    const resizeWidthInput = document.getElementById('resizeWidth');
-    const resizeHeightInput = document.getElementById('resizeHeight');
+    const resizeWidth = document.getElementById('resizeWidth');
+    const resizeHeight = document.getElementById('resizeHeight');
     const resizeButton = document.getElementById('resizeButton');
     const restoreResizeButton = document.getElementById('restoreResizeButton');
     const resizedImage = document.getElementById('resizedImage');
-    const resizePreview = document.getElementById('resizePreview');
+    const resizedPreview = document.getElementById('resizedPreview');
     const downloadResized = document.getElementById('downloadResized');
 
     // 旋转模块元素
-    const rotateAngleInput = document.getElementById('rotateAngle');
     const rotateButton = document.getElementById('rotateButton');
     const restoreRotateButton = document.getElementById('restoreRotateButton');
     const rotatedImage = document.getElementById('rotatedImage');
-    const rotatePreview = document.getElementById('rotatePreview');
+    const rotatedPreview = document.getElementById('rotatedPreview');
     const downloadRotated = document.getElementById('downloadRotated');
 
-    // 压缩质量模块元素
-    const compressionQualityInput = document.getElementById('compressionQuality');
-    const compressionQualityPercentage = document.getElementById('compressionQualityPercentage');
-    const compressionButton = document.getElementById('compressionButton');
-    const restoreCompressionButton = document.getElementById('restoreCompressionButton');
+    // 压缩模块元素
+    const compressionRange = document.getElementById('compressionRange');
+    const compressionPercentage = document.getElementById('compressionPercentage');
     const compressedImage = document.getElementById('compressedImage');
-    const compressionPreview = document.getElementById('compressionPreview');
+    const compressedPreview = document.getElementById('compressedPreview');
     const downloadCompressed = document.getElementById('downloadCompressed');
 
     // 圆角矩形模块元素
@@ -457,17 +416,6 @@
     const roundedImage = document.getElementById('roundedImage');
     const roundedPreview = document.getElementById('roundedPreview');
     const downloadRounded = document.getElementById('downloadRounded');
-
-    // 圆形裁剪模块元素
-    const circleRadiusInput = document.getElementById('circleRadius');
-    const circleRadiusPercentage = document.getElementById('circleRadiusPercentage');
-    const circularCropButton = document.getElementById('circularCropButton');
-    const restoreCircularCropButton = document.getElementById('restoreCircularCropButton');
-    const circularCroppedImage = document.getElementById('circularCroppedImage');
-    const circularCropPreview = document.getElementById('circularCropPreview');
-    const downloadCircularCropped = document.getElementById('downloadCircularCropped');
-    const cropCanvas = document.getElementById('cropCanvas');
-    const cropCtx = cropCanvas.getContext('2d');
 
     // 功能菜单点击事件
     menuButtons.forEach(button => {
@@ -480,11 +428,8 @@
         // 隐藏所有模块
         modules.forEach(mod => mod.classList.remove('active'));
         // 显示选中的模块
-        document.getElementById(targetModule).classList.add('active');
-
-        // 如果切换到圆形裁剪模块，初始化Canvas
-        if (targetModule === 'circularCropModule' && originalImageData) {
-          initializeCropCanvas();
+        if (targetModule) {
+          document.getElementById(targetModule).classList.add('active');
         }
       });
     });
@@ -508,45 +453,29 @@
           originalImageWidth = originalImage.width;
           originalImageHeight = originalImage.height;
 
-          // 预加载图像
-          preloadedImage = new Image();
-          preloadedImage.src = originalImageData;
-          preloadedImage.onload = () => {
-            // 初始化功能模块的输入值
+          // 初始化功能模块的输入值
+          // 调整大小
+          resizeWidth.value = originalImage.width;
+          resizeHeight.value = originalImage.height;
 
-            // 调整大小
-            resizeWidthInput.value = originalImage.width;
-            resizeHeightInput.value = originalImage.height;
+          // 压缩质量
+          compressionRange.value = 80;
+          compressionPercentage.textContent = '80%';
 
-            // 压缩质量
-            compressionQualityInput.value = 80;
-            compressionQualityPercentage.textContent = '80%';
+          // 重置旋转角度
+          currentRotation = 0;
 
-            // 旋转角度
-            rotateAngleInput.value = 0;
+          // 重置圆角输入，根据图片大小自动设置
+          const defaultRadius = calculateRadius(originalImage.width);
+          cornerRadiusInput.value = defaultRadius;
 
-            // 圆角输入，根据图片大小自动设置
-            const defaultRadius = calculateRadius(originalImage.width);
-            cornerRadiusInput.value = defaultRadius;
+          // 清除所有预览
+          clearAllPreviews();
 
-            // 圆形裁剪输入
-            circleRadiusInput.value = 150;
-            circleRadiusPercentage.textContent = '150px';
-
-            // 清除所有预览
-            clearAllPreviews();
-
-            // 重置Canvas
-            canvas.width = originalImage.width;
-            canvas.height = originalImage.height;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 如果切换到圆形裁剪模块，初始化Canvas
-            const activeModule = document.querySelector('.module.active').id;
-            if (activeModule === 'circularCropModule') {
-              initializeCropCanvas();
-            }
-          };
+          // 重置Canvas
+          canvas.width = originalImage.width;
+          canvas.height = originalImage.height;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
       }
       reader.readAsDataURL(file);
@@ -559,40 +488,48 @@
         return;
       }
 
-      const newWidth = parseInt(resizeWidthInput.value);
-      const newHeight = parseInt(resizeHeightInput.value);
+      let newWidth = parseInt(resizeWidth.value);
+      let newHeight = parseInt(resizeHeight.value);
 
       if (isNaN(newWidth) || isNaN(newHeight) || newWidth <= 0 || newHeight <= 0) {
         alert('请输入有效的宽度和高度。');
         return;
       }
 
-      // 创建一个新的Canvas用于调整大小
-      const resizeCanvas = document.createElement('canvas');
-      resizeCanvas.width = newWidth;
-      resizeCanvas.height = newHeight;
-      const resizeCtx = resizeCanvas.getContext('2d');
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        canvas.width = newWidth;
+        canvas.height = newHeight;
 
-      // 绘制调整大小后的图像
-      resizeCtx.drawImage(preloadedImage, 0, 0, newWidth, newHeight);
+        // 清空画布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // 绘制调整大小后的图片
+        ctx.drawImage(tempImage, 0, 0, newWidth, newHeight);
 
-      // 获取调整大小后的图片URL
-      const resizedDataURL = resizeCanvas.toDataURL('image/png');
-      resizedImage.src = resizedDataURL;
-      resizePreview.style.display = 'flex';
+        // 获取调整后的图片URL
+        const resizedDataURL = canvas.toDataURL('image/png');
+        resizedImage.src = resizedDataURL;
+        resizedPreview.style.display = 'flex';
+      }
     });
 
     // 复原调整大小
     restoreResizeButton.addEventListener('click', () => {
       if (!originalImageData) return;
 
-      resizeWidthInput.value = originalImageWidth;
-      resizeHeightInput.value = originalImageHeight;
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        resizeWidth.value = tempImage.width;
+        resizeHeight.value = tempImage.height;
+      }
+
       resizedImage.src = '';
-      resizePreview.style.display = 'none';
+      resizedPreview.style.display = 'none';
     });
 
-    // 下载调整大小后的图片
+    // 下载调整后的图片
     downloadResized.addEventListener('click', () => {
       const link = document.createElement('a');
       link.href = resizedImage.src;
@@ -603,49 +540,63 @@
     });
 
     // 旋转功能
+
+    let currentRotation = 0; // 存储当前旋转角度
+
     rotateButton.addEventListener('click', () => {
       if (!originalImageData) {
         alert('请先上传一张图片。');
         return;
       }
 
-      const angle = parseFloat(rotateAngleInput.value);
-      if (isNaN(angle)) {
-        alert('请输入有效的旋转角度。');
-        return;
+      currentRotation = (currentRotation + 90) % 360; // 每次增加90度
+
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        // 计算Canvas尺寸
+        if (currentRotation % 180 === 0) {
+          canvas.width = tempImage.width;
+          canvas.height = tempImage.height;
+        } else {
+          canvas.width = tempImage.height;
+          canvas.height = tempImage.width;
+        }
+
+        // 清空画布并进行旋转
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(currentRotation * Math.PI / 180);
+        ctx.drawImage(tempImage, -tempImage.width / 2, -tempImage.height / 2);
+        ctx.restore();
+
+        // 获取旋转后的图片URL
+        const rotatedDataURL = canvas.toDataURL('image/png');
+        rotatedImage.src = rotatedDataURL;
+        rotatedPreview.style.display = 'flex';
       }
-
-      // 将角度转换为弧度
-      const radians = angle * Math.PI / 180;
-
-      // 计算旋转后的Canvas大小
-      const rotatedWidth = Math.abs(originalImage.width * Math.cos(radians)) + Math.abs(originalImage.height * Math.sin(radians));
-      const rotatedHeight = Math.abs(originalImage.width * Math.sin(radians)) + Math.abs(originalImage.height * Math.cos(radians));
-
-      // 创建一个新的Canvas用于旋转
-      const rotateCanvas = document.createElement('canvas');
-      rotateCanvas.width = rotatedWidth;
-      rotateCanvas.height = rotatedHeight;
-      const rotateCtx = rotateCanvas.getContext('2d');
-
-      // 将Canvas中心移动到旋转中心
-      rotateCtx.translate(rotatedWidth / 2, rotatedHeight / 2);
-      rotateCtx.rotate(radians);
-      rotateCtx.drawImage(preloadedImage, -originalImage.width / 2, -originalImage.height / 2);
-
-      // 获取旋转后的图片URL
-      const rotatedDataURL = rotateCanvas.toDataURL('image/png');
-      rotatedImage.src = rotatedDataURL;
-      rotatePreview.style.display = 'flex';
     });
 
     // 复原旋转
     restoreRotateButton.addEventListener('click', () => {
       if (!originalImageData) return;
 
-      rotateAngleInput.value = 0;
-      rotatedImage.src = '';
-      rotatePreview.style.display = 'none';
+      currentRotation = 0; // 重置旋转角度
+
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        canvas.width = tempImage.width;
+        canvas.height = tempImage.height;
+
+        // 清空画布并绘制原始图片
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tempImage, 0, 0);
+
+        rotatedImage.src = '';
+        rotatedPreview.style.display = 'none';
+      }
     });
 
     // 下载旋转后的图片
@@ -658,47 +609,28 @@
       document.body.removeChild(link);
     });
 
-    // 压缩质量功能
-    compressionQualityInput.addEventListener('input', () => {
-      const quality = compressionQualityInput.value;
-      compressionQualityPercentage.textContent = `${quality}%`;
-    });
-
-    compressionButton.addEventListener('click', () => {
-      if (!originalImageData) {
-        alert('请先上传一张图片。');
-        return;
-      }
-
-      const quality = parseInt(compressionQualityInput.value) / 100;
-      if (isNaN(quality) || quality <= 0 || quality > 1) {
-        alert('请选择有效的压缩质量。');
-        return;
-      }
-
-      // 创建一个新的Canvas用于压缩
-      const compressionCanvas = document.createElement('canvas');
-      compressionCanvas.width = originalImage.width;
-      compressionCanvas.height = originalImage.height;
-      const compressionCtx = compressionCanvas.getContext('2d');
-
-      // 绘制图像
-      compressionCtx.drawImage(preloadedImage, 0, 0, compressionCanvas.width, compressionCanvas.height);
-
-      // 获取压缩后的图片URL
-      const compressedDataURL = compressionCanvas.toDataURL('image/jpeg', quality);
-      compressedImage.src = compressedDataURL;
-      compressionPreview.style.display = 'flex';
-    });
-
-    // 复原压缩质量
-    restoreCompressionButton.addEventListener('click', () => {
+    // 压缩功能
+    compressionRange.addEventListener('input', () => {
       if (!originalImageData) return;
 
-      compressionQualityInput.value = 80;
-      compressionQualityPercentage.textContent = '80%';
-      compressedImage.src = '';
-      compressionPreview.style.display = 'none';
+      const quality = compressionRange.value / 100;
+      compressionPercentage.textContent = `${compressionRange.value}%`;
+
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        canvas.width = tempImage.width;
+        canvas.height = tempImage.height;
+
+        // 清空画布并绘制图片
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tempImage, 0, 0);
+
+        // 获取压缩后的图片URL
+        const compressedDataURL = canvas.toDataURL('image/jpeg', quality);
+        compressedImage.src = compressedDataURL;
+        compressedPreview.style.display = 'flex';
+      }
     });
 
     // 下载压缩后的图片
@@ -718,53 +650,45 @@
         return;
       }
 
-      const radius = parseInt(cornerRadiusInput.value);
+      let radius = parseInt(cornerRadiusInput.value);
       if (isNaN(radius) || radius < 0) {
         alert('请输入有效的圆角半径。');
         return;
       }
 
-      // 创建一个新的Canvas用于圆角矩形
-      const roundedCanvas = document.createElement('canvas');
-      roundedCanvas.width = originalImage.width;
-      roundedCanvas.height = originalImage.height;
-      const roundedCtx = roundedCanvas.getContext('2d');
+      const tempImage = new Image();
+      tempImage.src = originalImageData;
+      tempImage.onload = function() {
+        canvas.width = tempImage.width;
+        canvas.height = tempImage.height;
 
-      // 绘制圆角矩形路径
-      roundedCtx.beginPath();
-      roundedCtx.moveTo(radius, 0);
-      roundedCtx.lineTo(roundedCanvas.width - radius, 0);
-      roundedCtx.quadraticCurveTo(roundedCanvas.width, 0, roundedCanvas.width, radius);
-      roundedCtx.lineTo(roundedCanvas.width, roundedCanvas.height - radius);
-      roundedCtx.quadraticCurveTo(roundedCanvas.width, roundedCanvas.height, roundedCanvas.width - radius, roundedCanvas.height);
-      roundedCtx.lineTo(radius, roundedCanvas.height);
-      roundedCtx.quadraticCurveTo(0, roundedCanvas.height, 0, roundedCanvas.height - radius);
-      roundedCtx.lineTo(0, radius);
-      roundedCtx.quadraticCurveTo(0, 0, radius, 0);
-      roundedCtx.closePath();
+        // 绘制圆角矩形路径
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        roundRect(ctx, 0, 0, canvas.width, canvas.height, radius);
+        ctx.clip();
 
-      // 裁剪为圆角矩形
-      roundedCtx.clip();
+        // 绘制图片
+        ctx.drawImage(tempImage, 0, 0);
 
-      // 绘制图像
-      roundedCtx.drawImage(preloadedImage, 0, 0, roundedCanvas.width, roundedCanvas.height);
-
-      // 获取圆角矩形后的图片URL
-      const roundedDataURL = roundedCanvas.toDataURL('image/png');
-      roundedImage.src = roundedDataURL;
-      roundedPreview.style.display = 'flex';
+        // 获取圆角后的图片URL
+        const roundedDataURL = canvas.toDataURL('image/png');
+        roundedImage.src = roundedDataURL;
+        roundedPreview.style.display = 'flex';
+      }
     });
 
-    // 复原圆角矩形
+    // 复原圆角
     restoreRoundedButton.addEventListener('click', () => {
       if (!originalImageData) return;
 
-      cornerRadiusInput.value = calculateRadius(originalImage.width);
+      const defaultRadius = calculateRadius(originalImage.width);
+      cornerRadiusInput.value = defaultRadius; // 重置为根据图片大小自动设置的值
+
       roundedImage.src = '';
       roundedPreview.style.display = 'none';
     });
 
-    // 下载圆角矩形后的图片
+    // 下载圆角后的图片
     downloadRounded.addEventListener('click', () => {
       const link = document.createElement('a');
       link.href = roundedImage.src;
@@ -774,260 +698,55 @@
       document.body.removeChild(link);
     });
 
-    // 圆形裁剪功能
-
-    let cropCircle = {
-      x: 0,
-      y: 0,
-      radius: 150,
-      isDragging: false,
-      offsetX: 0,
-      offsetY: 0
-    };
-
-    // 初始化裁剪Canvas
-    function initializeCropCanvas() {
-      if (!preloadedImage) return;
-
-      // 设置Canvas尺寸为图片尺寸，限制为最大宽度以应对容器
-      const maxCanvasWidth = 700; // 根据容器调整
-      let scale = 1;
-      if (preloadedImage.width > maxCanvasWidth) {
-        scale = maxCanvasWidth / preloadedImage.width;
-      }
-      cropCanvas.width = preloadedImage.width * scale;
-      cropCanvas.height = preloadedImage.height * scale;
-
-      // 清空Canvas
-      cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
-      // 绘制缩放后的图片
-      cropCtx.drawImage(preloadedImage, 0, 0, cropCanvas.width, cropCanvas.height);
-
-      // 设置裁剪圆的初始位置和半径
-      cropCircle.radius = Math.min(cropCanvas.width, cropCanvas.height) / 4; // 初始半径为四分之一
-      circleRadiusInput.value = cropCircle.radius;
-      circleRadiusPercentage.textContent = `${cropCircle.radius}px`;
-      cropCircle.x = cropCanvas.width / 2;
-      cropCircle.y = cropCanvas.height / 2;
-
-      drawCropCircle();
-    }
-
-    // 绘制裁剪圆
-    function drawCropCircle() {
-      if (!preloadedImage) return;
-
-      // 使用requestAnimationFrame优化绘制
-      requestAnimationFrame(() => {
-        // 清空Canvas并重新绘制图像
-        cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
-        cropCtx.drawImage(preloadedImage, 0, 0, cropCanvas.width, cropCanvas.height);
-
-        // 绘制半透明覆盖层
-        cropCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        cropCtx.beginPath();
-        cropCtx.rect(0, 0, cropCanvas.width, cropCanvas.height);
-        cropCtx.arc(cropCircle.x, cropCircle.y, cropCircle.radius, 0, Math.PI * 2, true);
-        cropCtx.fill('evenodd');
-
-        // 绘制圆形边框
-        cropCtx.strokeStyle = '#fff';
-        cropCtx.lineWidth = 2;
-        cropCtx.beginPath();
-        cropCtx.arc(cropCircle.x, cropCircle.y, cropCircle.radius, 0, Math.PI * 2, true);
-        cropCtx.stroke();
-      });
-    }
-
-    // 获取指针位置（鼠标或触摸）
-    function getPointerPosition(e) {
-      const rect = cropCanvas.getBoundingClientRect();
-      let clientX, clientY;
-
-      if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
+    // 辅助函数：绘制圆角矩形路径
+    function roundRect(ctx, x, y, width, height, radius) {
+      if (typeof radius === 'number') {
+        radius = {tl: radius, tr: radius, br: radius, bl: radius};
       } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
+        const defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
+        for (let side in defaultRadius) {
+          radius[side] = radius[side] || defaultRadius[side];
+        }
       }
-
-      return {
-        x: clientX - rect.left,
-        y: clientY - rect.top
-      };
+      ctx.beginPath();
+      ctx.moveTo(x + radius.tl, y);
+      ctx.lineTo(x + width - radius.tr, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+      ctx.lineTo(x + width, y + height - radius.br);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+      ctx.lineTo(x + radius.bl, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+      ctx.lineTo(x, y + radius.tl);
+      ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+      ctx.closePath();
     }
-
-    // 监听拖动事件
-    cropCanvas.addEventListener('mousedown', (e) => {
-      const pos = getPointerPosition(e);
-      const distance = Math.hypot(pos.x - cropCircle.x, pos.y - cropCircle.y);
-      if (distance <= cropCircle.radius) {
-        cropCircle.isDragging = true;
-        cropCircle.offsetX = cropCircle.x - pos.x;
-        cropCircle.offsetY = cropCircle.y - pos.y;
-      }
-    });
-
-    cropCanvas.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      const pos = getPointerPosition(e);
-      const distance = Math.hypot(pos.x - cropCircle.x, pos.y - cropCircle.y);
-      if (distance <= cropCircle.radius) {
-        cropCircle.isDragging = true;
-        cropCircle.offsetX = cropCircle.x - pos.x;
-        cropCircle.offsetY = cropCircle.y - pos.y;
-      }
-    }, { passive: false });
-
-    cropCanvas.addEventListener('mousemove', (e) => {
-      if (cropCircle.isDragging) {
-        const pos = getPointerPosition(e);
-        // 更新裁剪圆的位置
-        cropCircle.x = pos.x + cropCircle.offsetX;
-        cropCircle.y = pos.y + cropCircle.offsetY;
-
-        // 限制裁剪圆不超出图片边界
-        cropCircle.x = Math.max(cropCircle.radius, Math.min(cropCanvas.width - cropCircle.radius, cropCircle.x));
-        cropCircle.y = Math.max(cropCircle.radius, Math.min(cropCanvas.height - cropCircle.radius, cropCircle.y));
-
-        drawCropCircle();
-      }
-    });
-
-    cropCanvas.addEventListener('touchmove', (e) => {
-      if (cropCircle.isDragging) {
-        e.preventDefault();
-        const pos = getPointerPosition(e);
-        // 更新裁剪圆的位置
-        cropCircle.x = pos.x + cropCircle.offsetX;
-        cropCircle.y = pos.y + cropCircle.offsetY;
-
-        // 限制裁剪圆不超出图片边界
-        cropCircle.x = Math.max(cropCircle.radius, Math.min(cropCanvas.width - cropCircle.radius, cropCircle.x));
-        cropCircle.y = Math.max(cropCircle.radius, Math.min(cropCanvas.height - cropCircle.radius, cropCircle.y));
-
-        drawCropCircle();
-      }
-    }, { passive: false });
-
-    // 监听拖动结束事件
-    window.addEventListener('mouseup', () => {
-      if (cropCircle.isDragging) {
-        cropCircle.isDragging = false;
-      }
-    });
-
-    window.addEventListener('touchend', () => {
-      if (cropCircle.isDragging) {
-        cropCircle.isDragging = false;
-      }
-    });
-
-    // 圆形半径滑块事件
-    circleRadiusInput.addEventListener('input', () => {
-      let newRadius = parseInt(circleRadiusInput.value);
-      if (isNaN(newRadius) || newRadius <= 0) {
-        return;
-      }
-
-      // 根据图片尺寸动态设置最大半径
-      const maxRadius = Math.min(cropCanvas.width, cropCanvas.height) / 2;
-      if (newRadius > maxRadius) {
-        newRadius = maxRadius;
-        circleRadiusInput.value = newRadius;
-      }
-      cropCircle.radius = newRadius;
-      circleRadiusPercentage.textContent = `${newRadius}px`;
-
-      // 确保裁剪圆在图片内
-      cropCircle.x = Math.max(cropCircle.radius, Math.min(cropCanvas.width - cropCircle.radius, cropCircle.x));
-      cropCircle.y = Math.max(cropCircle.radius, Math.min(cropCanvas.height - cropCircle.radius, cropCircle.y));
-
-      drawCropCircle();
-    });
-
-    // 执行裁剪
-    circularCropButton.addEventListener('click', () => {
-      if (!originalImageData) {
-        alert('请先上传一张图片。');
-        return;
-      }
-
-      // 创建一个新的Canvas用于裁剪
-      const outputCanvas = document.createElement('canvas');
-      outputCanvas.width = cropCircle.radius * 2;
-      outputCanvas.height = cropCircle.radius * 2;
-      const outputCtx = outputCanvas.getContext('2d');
-
-      // 绘制圆形裁剪区域
-      outputCtx.beginPath();
-      outputCtx.arc(cropCircle.radius, cropCircle.radius, cropCircle.radius, 0, Math.PI * 2, true);
-      outputCtx.closePath();
-      outputCtx.clip();
-
-      // 计算原始图片上的裁剪区域
-      const scaleX = originalImageWidth / cropCanvas.width;
-      const scaleY = originalImageHeight / cropCanvas.height;
-
-      const sourceX = (cropCircle.x - cropCircle.radius) * scaleX;
-      const sourceY = (cropCircle.y - cropCircle.radius) * scaleY;
-      const sourceWidth = cropCircle.radius * 2 * scaleX;
-      const sourceHeight = cropCircle.radius * 2 * scaleY;
-
-      // 使用预加载的图像对象
-      outputCtx.drawImage(preloadedImage, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, outputCanvas.width, outputCanvas.height);
-
-      // 获取裁剪后的图片URL
-      const circularCroppedDataURL = outputCanvas.toDataURL('image/png');
-      circularCroppedImage.src = circularCroppedDataURL;
-      circularCropPreview.style.display = 'flex';
-    });
-
-    // 复原圆形裁剪
-    restoreCircularCropButton.addEventListener('click', () => {
-      if (!originalImageData) return;
-
-      initializeCropCanvas();
-      circularCroppedImage.src = '';
-      circularCropPreview.style.display = 'none';
-    });
-
-    // 下载圆形裁剪后的图片
-    downloadCircularCropped.addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.href = circularCroppedImage.src;
-      link.download = 'circular-cropped-image.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
 
     // 辅助函数：清除所有预览
     function clearAllPreviews() {
       // 调整大小预览
       resizedImage.src = '';
-      resizePreview.style.display = 'none';
+      resizedPreview.style.display = 'none';
 
       // 旋转预览
       rotatedImage.src = '';
-      rotatePreview.style.display = 'none';
+      rotatedPreview.style.display = 'none';
 
-      // 压缩质量预览
+      // 压缩预览
       compressedImage.src = '';
-      compressionPreview.style.display = 'none';
+      compressedPreview.style.display = 'none';
 
-      // 圆角矩形预览
+      // 圆角预览
       roundedImage.src = '';
       roundedPreview.style.display = 'none';
-
-      // 圆形裁剪预览
-      circularCroppedImage.src = '';
-      circularCropPreview.style.display = 'none';
-
-      // 清空裁剪Canvas
-      cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
     }
+
+    // 获取新功能按钮
+    const redirectButton = document.getElementById('redirectButton');
+
+    // 添加点击事件监听器
+    redirectButton.addEventListener('click', () => {
+      window.location.href = 'https://susubaby.top/zh/';
+    });
   </script>
 </body>
 </html>
